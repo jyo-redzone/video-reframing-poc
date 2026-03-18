@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import TopBar from './components/TopBar';
 import TrackPanel from './components/TrackPanel';
 import PlayerPanel from './components/PlayerPanel';
+import TimelineBar from './components/TimelineBar';
 import { VideoRefProvider } from './components/VideoRefContext';
 import usePlayback from './hooks/usePlayback';
 
@@ -19,10 +20,7 @@ function AppContent() {
           <TrackPanel />
         </aside>
         <section className="col-span-12">
-          {/* TimelineBar placeholder */}
-          <div className="rounded-2xl border bg-white shadow-sm p-4 h-40 flex items-center justify-center text-slate-400">
-            Timeline (Task 006)
-          </div>
+          <TimelineBar />
         </section>
       </main>
     </div>
