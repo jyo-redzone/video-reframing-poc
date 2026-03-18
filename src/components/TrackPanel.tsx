@@ -5,6 +5,25 @@ export default function TrackPanel() {
   const viewType = useAppStore((s) => s.viewType);
   const setMode = useAppStore((s) => s.setMode);
   const setViewType = useAppStore((s) => s.setViewType);
+  const currentTime = useAppStore((s) => s.currentTime);
+  const viewportRect = useAppStore((s) => s.viewportRect);
+  const activeTrackId = useAppStore((s) => s.activeTrackId);
+  const addKeyframe = useAppStore((s) => s.addKeyframe);
+  const selectKeyframe = useAppStore((s) => s.selectKeyframe);
+
+  const handleAddManualKF = () => {
+    if (!viewportRect) return;
+
+    const newId = `kf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    addKeyframe({
+      id: newId,
+      trackId: activeTrackId,
+      time: currentTime,
+      sourceRect: { ...viewportRect },
+      transitionToNext: 'smooth',
+    });
+    selectKeyframe(newId);
+  };
 
   return (
     <div className="rounded-2xl border bg-white shadow-sm">
@@ -138,7 +157,10 @@ export default function TrackPanel() {
         {/* Add Manual KF button */}
         <div className="grid grid-cols-2 items-end gap-3">
           <div></div>
-          <button className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800">
+          <button
+            className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800"
+            onClick={handleAddManualKF}
+          >
             + Add Manual KF
           </button>
         </div>
