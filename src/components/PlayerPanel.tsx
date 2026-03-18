@@ -4,12 +4,16 @@ import { useVideoRef } from './VideoRefContext';
 import PlaybackControls from './PlaybackControls';
 import ViewportOverlay from './ViewportOverlay';
 import BoundingBoxTool from './BoundingBoxTool';
+import PreviewCanvas from './PreviewCanvas';
 
 export default function PlayerPanel() {
   const videoRef = useVideoRef();
   const containerRef = useRef<HTMLDivElement>(null);
   const setVideoMetadata = useAppStore((s) => s.setVideoMetadata);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
+  const mode = useAppStore((s) => s.mode);
+  const viewType = useAppStore((s) => s.viewType);
+  const showPreview = mode === 'view' && viewType === 'preview';
 
   const handleLoadedMetadata = () => {
     const video = videoRef.current;
@@ -49,6 +53,7 @@ export default function PlayerPanel() {
             className="h-full w-full object-contain"
             onLoadedMetadata={handleLoadedMetadata}
           />
+          {showPreview && <PreviewCanvas containerRef={containerRef} />}
           <BoundingBoxTool containerRef={containerRef} />
           <ViewportOverlay containerRef={containerRef} />
         </div>
