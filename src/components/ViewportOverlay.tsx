@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useAppStore from '../store/useAppStore';
 import { resolve } from '../engine/cre';
 import { sourceToPercent } from '../utils/coordinates';
@@ -20,6 +20,7 @@ interface ViewportOverlayProps {
 }
 
 export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) {
+  const viewportDivRef = useRef<HTMLDivElement>(null);
   const mode = useAppStore((s) => s.mode);
   const viewType = useAppStore((s) => s.viewType);
   const viewportRect = useAppStore((s) => s.viewportRect);
@@ -133,6 +134,53 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
     };
   }, [interaction, handleMouseMove, handleMouseUp]);
 
+  // Scroll-to-zoom: attach native wheel listener with { passive: false }
+  useEffect(() => {
+    const el = viewportDivRef.current;
+    if (!el || !isEdit) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+
+      const rect = useAppStore.getState().viewportRect;
+      const meta = useAppStore.getState().videoMetadata;
+      if (!rect || !meta) return;
+
+      const vw = meta.width;
+      const vh = meta.height;
+
+      const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+
+      // Get mouse position relative to the viewport div as a ratio
+      const bounds = el.getBoundingClientRect();
+      const mouseXRatio = Math.max(0, Math.min(1, (e.clientX - bounds.left) / bounds.width));
+      const mouseYRatio = Math.max(0, Math.min(1, (e.clientY - bounds.top) / bounds.height));
+
+      // Compute new size
+      let newW = rect.width * zoomFactor;
+      let newH = rect.height * zoomFactor;
+
+      // Clamp size: min 10%, max 100% of video dimensions
+      newW = Math.min(Math.max(newW, vw * 0.1), vw);
+      newH = Math.min(Math.max(newH, vh * 0.1), vh);
+
+      // Adjust position to keep cursor point stationary
+      let newX = rect.x + mouseXRatio * (rect.width - newW);
+      let newY = rect.y + mouseYRatio * (rect.height - newH);
+
+      // Clamp position to bounds
+      newX = Math.min(Math.max(newX, 0), vw - newW);
+      newY = Math.min(Math.max(newY, 0), vh - newH);
+
+      useAppStore.getState().setViewportRect({ x: newX, y: newY, width: newW, height: newH });
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
+    };
+  }, [isEdit, !!displayRect, !!videoMetadata]);
+
   // Early returns after all hooks
   if (mode === 'view' && viewType === 'preview') return null;
   if (!displayRect || !videoMetadata) return null;
@@ -192,6 +240,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
       style={{ zIndex: 20, pointerEvents: 'none' }}
     >
       <div
+        ref={viewportDivRef}
         className={`absolute border-2 border-emerald-400/90 ${isEdit ? 'cursor-move' : ''}`}
         style={{
           left: `${pct.left}%`,

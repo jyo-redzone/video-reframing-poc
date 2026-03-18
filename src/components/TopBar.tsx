@@ -4,6 +4,20 @@ export default function TopBar() {
   const videoName = useAppStore(
     (s) => s.videoMetadata?.name ?? 'No video loaded',
   );
+  const videoMetadata = useAppStore((s) => s.videoMetadata);
+
+  const handleInfoClick = () => {
+    if (!videoMetadata) {
+      window.alert('No video loaded');
+      return;
+    }
+    const { width, height, duration, fps } = videoMetadata;
+    const durMin = Math.floor(duration / 60);
+    const durSec = (duration % 60).toFixed(1);
+    window.alert(
+      `Resolution: ${width}x${height}\nDuration: ${durMin}m ${durSec}s\nFPS: ${fps}`,
+    );
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
@@ -17,7 +31,7 @@ export default function TopBar() {
         <nav className="flex items-center gap-2">
           <button
             className="rounded px-3 py-1.5 text-sm hover:bg-slate-100"
-            onClick={() => window.alert('Video metadata info')}
+            onClick={handleInfoClick}
           >
             Info
           </button>

@@ -11,6 +11,7 @@ export default function PlayerPanel() {
   const containerRef = useRef<HTMLDivElement>(null);
   const setVideoMetadata = useAppStore((s) => s.setVideoMetadata);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
+  const setIsPlaying = useAppStore((s) => s.setIsPlaying);
   const mode = useAppStore((s) => s.mode);
   const viewType = useAppStore((s) => s.viewType);
   const showPreview = mode === 'view' && viewType === 'preview';
@@ -52,6 +53,7 @@ export default function PlayerPanel() {
             preload="auto"
             className="h-full w-full object-contain"
             onLoadedMetadata={handleLoadedMetadata}
+            onEnded={() => setIsPlaying(false)}
           />
           {showPreview && <PreviewCanvas containerRef={containerRef} />}
           <BoundingBoxTool containerRef={containerRef} />

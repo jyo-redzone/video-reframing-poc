@@ -34,6 +34,7 @@ export default function TimelineBar() {
   );
   const duration = useAppStore((s) => s.videoMetadata?.duration) ?? 60;
   const setCurrentTime = useAppStore((s) => s.setCurrentTime);
+  const setViewportRect = useAppStore((s) => s.setViewportRect);
   const selectKeyframe = useAppStore((s) => s.selectKeyframe);
   const selectSegment = useAppStore((s) => s.selectSegment);
 
@@ -130,6 +131,11 @@ export default function TimelineBar() {
                   onClick={(e) => {
                     e.stopPropagation();
                     selectSegment(segKey);
+                    const midTime = (seg.startTime + seg.endTime) / 2;
+                    setCurrentTime(midTime);
+                    if (videoRef.current) {
+                      videoRef.current.currentTime = midTime;
+                    }
                   }}
                 />
                 <text
@@ -159,6 +165,11 @@ export default function TimelineBar() {
                 onClick={(e) => {
                   e.stopPropagation();
                   selectKeyframe(kf.id);
+                  setCurrentTime(kf.time);
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = kf.time;
+                  }
+                  setViewportRect(kf.sourceRect);
                 }}
               />
             );
