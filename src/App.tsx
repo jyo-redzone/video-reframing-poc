@@ -3,6 +3,8 @@ import TopBar from './components/TopBar';
 import TrackPanel from './components/TrackPanel';
 import PlayerPanel from './components/PlayerPanel';
 import TimelineBar from './components/TimelineBar';
+import KeyframeDialog from './components/KeyframeDialog';
+import SegmentDialog from './components/SegmentDialog';
 import { VideoRefProvider } from './components/VideoRefContext';
 import usePlayback from './hooks/usePlayback';
 
@@ -23,6 +25,8 @@ function AppContent() {
           <TimelineBar />
         </section>
       </main>
+      <KeyframeDialog />
+      <SegmentDialog />
     </div>
   );
 }
