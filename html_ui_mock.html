@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wireframe – Minimal Working UI</title>
+  <!-- Tailwind (CDN) for quick layout + styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <!-- (A) TOP BAR -->
+  <header class="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-slate-500">Video:</span>
+        <span class="rounded bg-slate-100 px-2 py-1 text-sm font-medium">Match_2025_11_21_4K</span>
+      </div>
+      <nav class="flex items-center gap-2">
+        <button class="rounded px-3 py-1.5 text-sm hover:bg-slate-100">Info</button>
+        <button class="rounded px-3 py-1.5 text-sm hover:bg-slate-100">Jobs</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN GRID: (B) PLAYER + (C) TRACK/EXPORT -->
+  <main class="mx-auto grid max-w-7xl grid-cols-12 gap-4 px-4 py-4">
+    <!-- (B) PLAYER -->
+    <section class="col-span-12 lg:col-span-8">
+      <div class="rounded-2xl border bg-white shadow-sm">
+
+        <div class="p-4">
+          <!-- Video placeholder frame -->
+          <div class="relative aspect-video w-full overflow-hidden rounded-xl border bg-slate-900">
+            <div class="absolute inset-0 flex items-center justify-center text-sm text-slate-300">
+              Video Frame (placeholder)
+            </div>
+
+            <!-- Viewport overlay (sourceRect) -->
+            <div id="viewportBox" class="absolute left-[20%] top-[20%] h-[40%] w-[45%] rounded border-2 border-emerald-400/90">
+              <div class="absolute -top-8 left-0 rounded bg-emerald-500/90 px-2 py-1 text-xs text-white">
+                Viewport (sourceRect)
+              </div>
+            </div>
+          </div>
+
+          <!-- Playback controls -->
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1">
+              <button class="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50" title="Prev">⏮</button>
+              <button id="btnPlayPause" class="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50" title="Play/Pause">⏯</button>
+              <button class="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50" title="Next">⏭</button>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+              <span class="text-sm text-slate-500">Time</span>
+              <span id="timecode" class="rounded bg-slate-100 px-2 py-1 font-mono text-sm">00:10.000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- (C) TRACK / EXPORT -->
+    <aside class="col-span-12 lg:col-span-4">
+      <div class="rounded-2xl border bg-white shadow-sm">
+        <div class="flex items-center justify-between border-b px-4 py-3">
+          <div class="font-semibold">Track</div>
+          <button class="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50">Export</button>
+        </div>
+
+        <div class="space-y-4 p-4">
+          <div class="space-y-2">
+            <label class="text-sm text-slate-600">Selected</label>
+            <select class="w-full rounded-lg border px-3 py-2 text-sm">
+              <option>Ball track</option>
+              <option>Player A</option>
+              <option>Player B</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-2">
+              <label class="text-sm text-slate-600">Mode</label>
+              <select class="w-full rounded-lg border px-3 py-2 text-sm">
+                <option>View</option>
+                <option>Edit</option>
+              </select>
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm text-slate-600">View</label>
+              <select class="w-full rounded-lg border px-3 py-2 text-sm">
+                <option>Source</option>
+                <option>Preview</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Ranges exist visually but can be ignored. Keeping for layout parity. -->
+          <div class="rounded-xl border bg-slate-50 p-3">
+            <div class="mb-2 text-sm font-semibold">Export ranges</div>
+            <div id="ranges" class="space-y-2">
+              <div class="flex items-center justify-between rounded-lg border bg-white px-3 py-2">
+                <div class="text-sm">
+                  <span class="font-medium">R1:</span>
+                  <span class="font-mono">00:10 - 00:20</span>
+                </div>
+                <button class="rounded px-2 py-1 text-sm hover:bg-slate-100" title="Edit">✎</button>
+              </div>
+              <div class="flex items-center justify-between rounded-lg border bg-white px-3 py-2">
+                <div class="text-sm">
+                  <span class="font-medium">R2:</span>
+                  <span class="font-mono">00:30 - 00:35</span>
+                </div>
+                <button class="rounded px-2 py-1 text-sm hover:bg-slate-100" title="Edit">✎</button>
+              </div>
+            </div>
+            <button class="mt-3 w-full rounded-lg border px-3 py-2 text-sm hover:bg-white">+ Add range</button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-2">
+              <label class="text-sm text-slate-600">Output res</label>
+              <select class="w-full rounded-lg border px-3 py-2 text-sm">
+                <option>1080p</option>
+                <option>720p</option>
+                <option>Source</option>
+              </select>
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm text-slate-600">Keyframe capture</label>
+              <label class="flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm">
+                <input id="autoKf" type="checkbox" class="h-4 w-4" checked />
+                Auto
+                <span class="ml-auto relative group text-slate-400 cursor-help">🛈
+                  <span class="pointer-events-none absolute right-0 top-6 z-50 hidden w-64 rounded-lg border bg-white p-3 text-xs text-slate-700 shadow-lg group-hover:block">
+                    <div class="mb-1 font-semibold">Auto keyframe capture</div>
+                    <div class="mb-1">Key frames are automatically captured at</div>
+                    <ol class="list-decimal pl-4 space-y-1">
+                      <li>Start and end of PTZ gesture</li>
+                      <li>BBox create</li>
+                    </ol>
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Align button visually to the bottom relative to the Auto row above -->
+          <div class="grid grid-cols-2 gap-3 items-end">
+            <div></div>
+            <button id="btnAddManualKf" class="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800">+ Add Manual KF</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- (D) TIMELINE (SVG-based, semantic) -->
+    <section class="col-span-12">
+      <div class="rounded-2xl border bg-white shadow-sm">
+        <div class="border-b px-4 py-3 font-semibold">Timeline</div>
+        <div class="p-4">
+          <!-- SVG Timeline: keyframes = points, segments = intervals between keyframes -->
+          <div class="relative">
+            <svg id="timelineSvg" viewBox="0 0 1000 120" class="w-full rounded-lg border bg-white">
+              <!-- Axis -->
+              <line x1="40" y1="60" x2="960" y2="60" stroke="#CBD5E1" stroke-width="2" />
+              <!-- Ticks (10s..40s for demo) -->
+              <g id="ticks" font-size="12" fill="#475569">
+                <g transform="translate(200,0)"><line x1="0" y1="54" x2="0" y2="66" stroke="#CBD5E1" /><text x="-16" y="90">00:10</text></g>
+                <g transform="translate(400,0)"><line x1="0" y1="54" x2="0" y2="66" stroke="#CBD5E1" /><text x="-16" y="90">00:20</text></g>
+                <g transform="translate(600,0)"><line x1="0" y1="54" x2="0" y2="66" stroke="#CBD5E1" /><text x="-16" y="90">00:30</text></g>
+                <g transform="translate(800,0)"><line x1="0" y1="54" x2="0" y2="66" stroke="#CBD5E1" /><text x="-16" y="90">00:40</text></g>
+              </g>
+              <!-- Segments + Keyframes rendered by JS -->
+              <g id="segmentsLayer"></g>
+              <g id="keyframesLayer"></g>
+              <!-- Playhead -->
+              <line id="svgPlayhead" x1="400" y1="20" x2="400" y2="100" stroke="#0F172A" stroke-width="2" />
+            </svg>
+          </div>
+
+          <!-- Scrub bar (kept for backwards-compat + explicit playhead UI) -->
+          <div class="mt-3 flex items-center gap-4" style="display:none">
+            <div class="w-20 shrink-0 text-sm font-medium text-slate-600">Scrub:</div>
+            <div id="scrub" class="relative h-10 flex-1 rounded-lg border bg-slate-50">
+              <div class="absolute inset-x-2 top-1/2 h-px -translate-y-1/2 bg-slate-300"></div>
+              <div id="playhead" class="absolute left-[30%] top-1 h-8 w-0.5 bg-slate-900"></div>
+              <div class="absolute left-[30%] top-8 -translate-x-1/2 text-[10px] font-mono text-slate-600">playhead</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- KEYFRAME DIALOG -->
+  <dialog id="kfDialog" class="w-[min(520px,92vw)] rounded-2xl border bg-white p-0 shadow-xl">
+    <form method="dialog" class="p-4">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <div class="text-base font-semibold" id="kfTitle">Keyframe</div>
+          <div class="text-xs text-slate-500">t, x, y, w, h</div>
+        </div>
+        <button class="rounded-lg border px-2 py-1 text-sm hover:bg-slate-50" value="cancel">✕</button>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">t (sec)</span>
+          <input id="kf_t" class="w-full rounded-lg border px-3 py-2 font-mono text-sm" />
+        </label>
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">x</span>
+          <input id="kf_x" class="w-full rounded-lg border px-3 py-2 font-mono text-sm" />
+        </label>
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">y</span>
+          <input id="kf_y" class="w-full rounded-lg border px-3 py-2 font-mono text-sm" />
+        </label>
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">w</span>
+          <input id="kf_w" class="w-full rounded-lg border px-3 py-2 font-mono text-sm" />
+        </label>
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">h</span>
+          <input id="kf_h" class="w-full rounded-lg border px-3 py-2 font-mono text-sm" />
+        </label>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button class="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50" value="cancel">Cancel</button>
+        <button id="kfSave" class="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800" value="default">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- SEGMENT DIALOG -->
+  <dialog id="segDialog" class="w-[min(560px,92vw)] rounded-2xl border bg-white p-0 shadow-xl">
+    <form method="dialog" class="p-4">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <div class="text-base font-semibold" id="segTitle">Segment</div>
+          <div class="text-xs text-slate-500">interval transition + derived ops (display-only)</div>
+        </div>
+        <button class="rounded-lg border px-2 py-1 text-sm hover:bg-slate-50" value="cancel">✕</button>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 gap-3">
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">Transition style</span>
+          <select id="seg_style" class="w-full rounded-lg border px-3 py-2 text-sm">
+            <option value="cut">cut</option>
+            <option value="smooth">smooth</option>
+          </select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">Derived operations</span>
+          <textarea id="seg_ops" class="min-h-[84px] w-full rounded-lg border px-3 py-2 font-mono text-sm" readonly></textarea>
+          <div class="text-xs text-slate-500">Note: derived ops are heuristic UI hints; not authoritative data.</div>
+        </label>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button class="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50" value="cancel">Cancel</button>
+        <button id="segSave" class="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800" value="default">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- Tiny sanity tests (minimal, browser-only) ---
+      function assert(cond, msg) {
+        if (!cond) throw new Error(`UI Assert Failed: ${msg}`);
+      }
+
+      assert(document.getElementById('btnPlayPause'), '#btnPlayPause missing');
+      assert(document.getElementById('btnAddManualKf'), '#btnAddManualKf missing');
+      assert(document.getElementById('timecode'), '#timecode missing');
+      assert(document.getElementById('viewportBox'), '#viewportBox missing');
+      assert(document.getElementById('timelineSvg'), '#timelineSvg missing');
+      assert(document.getElementById('scrub'), '#scrub missing');
+      assert(document.getElementById('playhead'), '#playhead missing');
+      assert(document.getElementById('kfDialog'), '#kfDialog missing');
+      assert(document.getElementById('segDialog'), '#segDialog missing');
+
+      // --- Minimal app state (single-track demo) ---
+      const state = {
+        playing: false,
+        t: 10.0,
+        // Keyframes are the authoritative points.
+        // x/y/w/h are normalized [0..1] in this demo.
+        keyframes: new Map(),
+        // Segment properties are per-interval between consecutive keyframes.
+        // Key: `${leftId}|${rightId}`
+        segments: new Map(),
+        selectedKfId: null,
+        selectedSegKey: null,
+      };
+
+      // Seed demo keyframes (since we no longer have DOM .kf buttons)
+      const seedKfs = [
+        { id: 'KF0', t: 10.0, x: 0.20, y: 0.20, w: 0.45, h: 0.40 },
+        { id: 'KF1', t: 20.0, x: 0.25, y: 0.20, w: 0.45, h: 0.40 },
+        { id: 'KF2', t: 35.0, x: 0.30, y: 0.22, w: 0.40, h: 0.38 },
+        { id: 'KF3', t: 40.0, x: 0.30, y: 0.22, w: 0.40, h: 0.38 },
+      ];
+      seedKfs.forEach(kf => state.keyframes.set(kf.id, { ...kf }));
+
+      // Seed demo segment properties for intervals
+      // KF0->KF1 smooth, KF1->KF2 smooth, KF2->KF3 cut
+      state.segments.set('KF0|KF1', { style: 'smooth', ops: 'pan right, zoom 2x' });
+      state.segments.set('KF1|KF2', { style: 'smooth', ops: 'smooth' });
+      state.segments.set('KF2|KF3', { style: 'cut', ops: 'cut' });
+
+      // Helpers
+      const clamp01 = (v) => Math.max(0, Math.min(1, v));
+      const fmtTime = (t) => {
+        const m = Math.floor(t / 60);
+        const s = t - m * 60;
+        const mm = String(m).padStart(2, '0');
+        const ss = String(Math.floor(s)).padStart(2, '0');
+        const ms = String(Math.floor((s - Math.floor(s)) * 1000)).padStart(3, '0');
+        return `${mm}:${ss}.${ms}`;
+      };
+
+      function sortedKeyframes() {
+        return Array.from(state.keyframes.values()).sort((a,b) => a.t - b.t);
+      }
+
+      // --- Viewport overlay (sourceRect) ---
+      function applyViewportFromKeyframe(kf) {
+        const vb = document.getElementById('viewportBox');
+        vb.style.left = `${kf.x * 100}%`;
+        vb.style.top = `${kf.y * 100}%`;
+        vb.style.width = `${kf.w * 100}%`;
+        vb.style.height = `${kf.h * 100}%`;
+      }
+
+      // --- Playback + time UI ---
+      const timecodeEl = document.getElementById('timecode');
+      const playheadEl = document.getElementById('playhead');
+
+      // Assume timeline spans 10s..40s for this demo
+      const spanStart = 10;
+      const spanEnd = 40;
+
+      function updateTimeUI() {
+        timecodeEl.textContent = fmtTime(state.t);
+        const pct = clamp01((state.t - spanStart) / (spanEnd - spanStart));
+        playheadEl.style.left = `${pct * 100}%`;
+        updateSvgPlayhead();
+      }
+
+      let raf = null;
+      function tick() {
+        if (!state.playing) return;
+        state.t += 0.033;
+        if (state.t > spanEnd) state.t = spanStart;
+        updateTimeUI();
+        raf = requestAnimationFrame(tick);
+      }
+
+      document.getElementById('btnPlayPause').addEventListener('click', () => {
+        state.playing = !state.playing;
+        if (state.playing) raf = requestAnimationFrame(tick);
+        else if (raf) cancelAnimationFrame(raf);
+      });
+
+      // Scrub bar click
+      const scrub = document.getElementById('scrub');
+      scrub.addEventListener('click', (e) => {
+        const r = scrub.getBoundingClientRect();
+        const pct = clamp01((e.clientX - r.left) / r.width);
+        state.t = spanStart + pct * (spanEnd - spanStart);
+        updateTimeUI();
+      });
+
+      // --- Keyframe dialog ---
+      const kfDialog = document.getElementById('kfDialog');
+      const kfTitle = document.getElementById('kfTitle');
+      const kf_t = document.getElementById('kf_t');
+      const kf_x = document.getElementById('kf_x');
+      const kf_y = document.getElementById('kf_y');
+      const kf_w = document.getElementById('kf_w');
+      const kf_h = document.getElementById('kf_h');
+
+      function openKeyframeDialog(id) {
+        const kf = state.keyframes.get(id);
+        if (!kf) return;
+        state.selectedKfId = id;
+
+        kfTitle.textContent = `Keyframe ${id}`;
+        kf_t.value = kf.t.toFixed(3);
+        kf_x.value = kf.x.toFixed(3);
+        kf_y.value = kf.y.toFixed(3);
+        kf_w.value = kf.w.toFixed(3);
+        kf_h.value = kf.h.toFixed(3);
+
+        kfDialog.showModal();
+      }
+
+      document.getElementById('kfSave').addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = state.selectedKfId;
+        if (!id) return;
+        const kf = state.keyframes.get(id);
+        if (!kf) return;
+
+        // Update keyframe
+        const next = {
+          ...kf,
+          t: parseFloat(kf_t.value),
+          x: parseFloat(kf_x.value),
+          y: parseFloat(kf_y.value),
+          w: parseFloat(kf_w.value),
+          h: parseFloat(kf_h.value),
+        };
+        state.keyframes.set(id, next);
+
+        applyViewportFromKeyframe(next);
+        renderTimeline();
+        updateTimeUI();
+        kfDialog.close();
+      });
+
+      // --- Segment dialog (interval between consecutive keyframes) ---
+      const segDialog = document.getElementById('segDialog');
+      const segTitle = document.getElementById('segTitle');
+      const seg_style = document.getElementById('seg_style');
+      const seg_ops = document.getElementById('seg_ops');
+
+      function openSegmentDialog(segKey) {
+        const seg = state.segments.get(segKey) || { style: 'smooth', ops: '' };
+        state.selectedSegKey = segKey;
+
+        segTitle.textContent = `Segment ${segKey.replace('|', ' → ')}`;
+        seg_style.value = seg.style;
+        seg_ops.value = seg.ops || '';
+
+        segDialog.showModal();
+      }
+
+      document.getElementById('segSave').addEventListener('click', (e) => {
+        e.preventDefault();
+        const key = state.selectedSegKey;
+        if (!key) return;
+        const prev = state.segments.get(key) || { style: 'smooth', ops: '' };
+
+        state.segments.set(key, {
+          ...prev,
+          style: seg_style.value,
+          // ops remains read-only in UI; keep whatever was there
+        });
+
+        renderTimeline();
+        segDialog.close();
+      });
+
+      // --- SVG TIMELINE ---
+      const svg = document.getElementById('timelineSvg');
+      const segmentsLayer = document.getElementById('segmentsLayer');
+      const keyframesLayer = document.getElementById('keyframesLayer');
+      const svgPlayhead = document.getElementById('svgPlayhead');
+
+      const TL = {
+        x0: 40,
+        x1: 960,
+        y: 60,
+        t0: spanStart,
+        t1: spanEnd,
+        xForT(t) {
+          const pct = clamp01((t - this.t0) / (this.t1 - this.t0));
+          return this.x0 + pct * (this.x1 - this.x0);
+        }
+      };
+
+      function clearLayer(g) { while (g.firstChild) g.removeChild(g.firstChild); }
+
+      function renderTimeline() {
+        clearLayer(segmentsLayer);
+        clearLayer(keyframesLayer);
+
+        const kfs = sortedKeyframes();
+
+        // Segments (intervals)
+        for (let i = 0; i < kfs.length - 1; i++) {
+          const a = kfs[i];
+          const b = kfs[i + 1];
+          const segKey = `${a.id}|${b.id}`;
+          const seg = state.segments.get(segKey) || { style: 'smooth', ops: '' };
+
+          const x = TL.xForT(a.t);
+          const w = TL.xForT(b.t) - x;
+
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('x', x);
+          rect.setAttribute('y', TL.y - 10);
+          rect.setAttribute('width', Math.max(2, w));
+          rect.setAttribute('height', 20);
+          rect.setAttribute('rx', 6);
+          rect.setAttribute('fill', seg.style === 'cut' ? '#E5E7EB' : '#CBD5E1');
+          rect.style.cursor = 'pointer';
+          rect.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            openSegmentDialog(segKey);
+          });
+          segmentsLayer.appendChild(rect);
+
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', x + w / 2);
+          label.setAttribute('y', TL.y + 4);
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('font-size', '10');
+          label.setAttribute('fill', '#334155');
+          label.textContent = seg.style;
+          segmentsLayer.appendChild(label);
+        }
+
+        // Keyframes (diamond heads)
+        kfs.forEach(kf => {
+          const cx = TL.xForT(kf.t);
+          const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          poly.setAttribute('points', `${cx},${TL.y - 14} ${cx - 6},${TL.y} ${cx},${TL.y + 14} ${cx + 6},${TL.y}`);
+          poly.setAttribute('fill', '#0F172A');
+          poly.style.cursor = 'pointer';
+          poly.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            openKeyframeDialog(kf.id);
+          });
+          keyframesLayer.appendChild(poly);
+        });
+      }
+
+      function updateSvgPlayhead() {
+        const x = TL.xForT(state.t);
+        svgPlayhead.setAttribute('x1', x);
+        svgPlayhead.setAttribute('x2', x);
+      }
+
+      // Click-to-scrub on SVG
+      svg.addEventListener('click', (e) => {
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const inv = svg.getScreenCTM().inverse();
+        const p = pt.matrixTransform(inv);
+        const pct = clamp01((p.x - TL.x0) / (TL.x1 - TL.x0));
+        state.t = TL.t0 + pct * (TL.t1 - TL.t0);
+        updateTimeUI();
+      });
+
+      // Add manual KF: adds a keyframe at current playhead time, using current viewport overlay as x/y/w/h
+      document.getElementById('btnAddManualKf').addEventListener('click', () => {
+        const id = `KF${state.keyframes.size}`;
+
+        // Capture current viewport overlay as normalized values
+        const vb = document.getElementById('viewportBox');
+        const parent = vb.parentElement.getBoundingClientRect();
+        const rect = vb.getBoundingClientRect();
+        const x = (rect.left - parent.left) / parent.width;
+        const y = (rect.top - parent.top) / parent.height;
+        const w = rect.width / parent.width;
+        const h = rect.height / parent.height;
+
+        state.keyframes.set(id, {
+          id,
+          t: state.t,
+          x: clamp01(x),
+          y: clamp01(y),
+          w: clamp01(w),
+          h: clamp01(h),
+        });
+
+        // NOTE: segment intervals will change. Any new interval without a saved segment style defaults to 'smooth'.
+        renderTimeline();
+        openKeyframeDialog(id);
+      });
+
+      // --- Additional small tests (non-invasive) ---
+      // Ensure we have keyframes and that timeline can render without throwing.
+      assert(sortedKeyframes().length >= 2, 'expected at least 2 keyframes');
+
+      // Initial render
+      renderTimeline();
+      updateTimeUI();
+      // Initialize viewport from earliest keyframe
+      const first = sortedKeyframes()[0];
+      if (first) applyViewportFromKeyframe(first);
+    });
+  </script>
+</body>
+</html>
