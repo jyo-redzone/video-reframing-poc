@@ -65,21 +65,21 @@ export default function PlaybackControls() {
     <div className="mt-4 flex flex-wrap items-center gap-2">
       <div className="flex items-center gap-1">
         <button
-          className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+          className="rounded-default border border-border-subtle px-3 py-2 text-sm text-text-primary hover:bg-white/10"
           title="Prev frame"
           onClick={handlePrevFrame}
         >
           ⏮
         </button>
         <button
-          className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+          className="rounded-default border border-border-subtle px-3 py-2 text-sm text-text-primary hover:bg-white/10"
           title="Play/Pause"
           onClick={handlePlayPause}
         >
           {isPlaying ? '⏸' : '▶'}
         </button>
         <button
-          className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+          className="rounded-default border border-border-subtle px-3 py-2 text-sm text-text-primary hover:bg-white/10"
           title="Next frame"
           onClick={handleNextFrame}
         >
@@ -87,8 +87,8 @@ export default function PlaybackControls() {
         </button>
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <span className="text-sm text-slate-500">Time</span>
-        <span className="rounded bg-slate-100 px-2 py-1 font-mono text-sm">
+        <span className="text-sm text-text-secondary">Time</span>
+        <span className="rounded-default bg-white/10 px-2 py-1 font-mono text-sm text-text-primary">
           {formatTimecode(currentTime)}
         </span>
       </div>

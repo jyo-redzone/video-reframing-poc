@@ -41,11 +41,11 @@ export default function PlayerPanel() {
   };
 
   return (
-    <div className="rounded-2xl border bg-white shadow-sm">
+    <div className="rounded-default border border-border-subtle bg-surface shadow-elevation-1">
       <div className="p-4">
         <div
           ref={containerRef}
-          className="relative aspect-video w-full overflow-hidden rounded-xl border bg-slate-900"
+          className="relative aspect-video w-full overflow-hidden rounded-default border border-border-subtle bg-appbar"
         >
           <video
             ref={videoRef}

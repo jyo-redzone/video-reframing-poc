@@ -74,13 +74,13 @@ export default function TimelineBar() {
   const playheadX = xForTime(currentTime, duration);
 
   return (
-    <div className="rounded-2xl border bg-white shadow-sm">
-      <div className="border-b px-4 py-3 font-semibold">Timeline</div>
+    <div className="rounded-default border border-border-subtle bg-surface shadow-elevation-1">
+      <div className="border-b border-border-subtle px-4 py-3 font-semibold text-text-primary">Timeline</div>
       <div className="p-4">
         <svg
           ref={svgRef}
           viewBox="0 0 1000 120"
-          className="w-full rounded-lg border bg-white"
+          className="w-full rounded-default border border-border-subtle bg-surface-raised"
           onClick={handleSvgClick}
         >
           {/* 1. Axis line */}
@@ -89,7 +89,7 @@ export default function TimelineBar() {
             y1={TL_Y}
             x2={TL_X1}
             y2={TL_Y}
-            stroke="#CBD5E1"
+            stroke="rgba(255,255,255,0.2)"
             strokeWidth={2}
           />
 
@@ -98,13 +98,13 @@ export default function TimelineBar() {
             const x = xForTime(t, duration);
             return (
               <g key={t}>
-                <line x1={x} y1={54} x2={x} y2={66} stroke="#CBD5E1" />
+                <line x1={x} y1={54} x2={x} y2={66} stroke="rgba(255,255,255,0.2)" />
                 <text
                   x={x}
                   y={90}
                   textAnchor="middle"
                   fontSize={12}
-                  fill="#475569"
+                  fill="rgba(255,255,255,0.6)"
                 >
                   {formatTime(t)}
                 </text>
@@ -125,8 +125,8 @@ export default function TimelineBar() {
                   y={50}
                   width={w}
                   height={20}
-                  rx={6}
-                  fill={seg.transition === 'cut' ? '#E5E7EB' : '#CBD5E1'}
+                  rx={2}
+                  fill={seg.transition === 'cut' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.22)'}
                   cursor="pointer"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -143,7 +143,7 @@ export default function TimelineBar() {
                   y={64}
                   textAnchor="middle"
                   fontSize={10}
-                  fill="#334155"
+                  fill="rgba(255,255,255,0.7)"
                   pointerEvents="none"
                 >
                   {seg.transition}
@@ -160,7 +160,7 @@ export default function TimelineBar() {
               <polygon
                 key={kf.id}
                 points={`${cx},${cy - 14} ${cx - 6},${cy} ${cx},${cy + 14} ${cx + 6},${cy}`}
-                fill="#0F172A"
+                fill="#E4022C"
                 cursor="pointer"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -181,7 +181,7 @@ export default function TimelineBar() {
             y1={20}
             x2={playheadX}
             y2={100}
-            stroke="#0F172A"
+            stroke="rgba(255,255,255,0.9)"
             strokeWidth={2}
           />
         </svg>

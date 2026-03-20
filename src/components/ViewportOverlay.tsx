@@ -241,7 +241,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
     >
       <div
         ref={viewportDivRef}
-        className={`absolute border-2 border-emerald-400/90 ${isEdit ? 'cursor-move' : ''}`}
+        className={`absolute border-2 border-brand ${isEdit ? 'cursor-move' : ''}`}
         style={{
           left: `${pct.left}%`,
           top: `${pct.top}%`,
@@ -253,7 +253,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
       >
         {/* Label */}
         <div
-          className="absolute -top-6 left-0 rounded bg-emerald-500 px-1.5 py-0.5 text-xs text-white whitespace-nowrap"
+          className="absolute -top-6 left-0 rounded-default bg-brand px-1.5 py-0.5 text-xs text-white whitespace-nowrap"
           style={{ pointerEvents: 'none' }}
         >
           Viewport ({rectLabel})
@@ -265,7 +265,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
             <div
               key={corner}
               data-resize-handle="true"
-              className="absolute bg-emerald-400"
+              className="absolute bg-brand"
               style={{
                 width: 8,
                 height: 8,

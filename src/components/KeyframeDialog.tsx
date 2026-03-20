@@ -84,18 +84,18 @@ export default function KeyframeDialog() {
   return (
     <dialog
       ref={dialogRef}
-      className="w-[min(520px,92vw)] rounded-2xl border bg-white p-0 shadow-xl"
+      className="w-[min(520px,92vw)] rounded-default border border-border-dialog bg-surface p-0 shadow-elevation-8"
     >
       <div className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-base font-semibold">
+            <div className="text-base font-semibold text-text-primary">
               Keyframe {selectedKeyframeId}
             </div>
-            <div className="text-xs text-slate-500">t, x, y, w, h</div>
+            <div className="text-xs text-text-secondary">t, x, y, w, h</div>
           </div>
           <button
-            className="rounded-lg border px-2 py-1 text-sm hover:bg-slate-50"
+            className="rounded-default border border-border-subtle px-2 py-1 text-sm text-text-primary hover:bg-white/10"
             onClick={handleCancel}
           >
             &#10005;
@@ -104,47 +104,47 @@ export default function KeyframeDialog() {
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">t (sec)</span>
+            <span className="text-text-secondary">t (sec)</span>
             <input
               type="number"
               step="0.001"
-              className="w-full rounded-lg border px-3 py-2 font-mono text-sm"
+              className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 font-mono text-sm text-text-primary"
               value={t}
               onChange={(e) => setT(e.target.value)}
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">x</span>
+            <span className="text-text-secondary">x</span>
             <input
               type="number"
-              className="w-full rounded-lg border px-3 py-2 font-mono text-sm"
+              className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 font-mono text-sm text-text-primary"
               value={x}
               onChange={(e) => setX(e.target.value)}
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">y</span>
+            <span className="text-text-secondary">y</span>
             <input
               type="number"
-              className="w-full rounded-lg border px-3 py-2 font-mono text-sm"
+              className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 font-mono text-sm text-text-primary"
               value={y}
               onChange={(e) => setY(e.target.value)}
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">w</span>
+            <span className="text-text-secondary">w</span>
             <input
               type="number"
-              className="w-full rounded-lg border px-3 py-2 font-mono text-sm"
+              className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 font-mono text-sm text-text-primary"
               value={w}
               onChange={(e) => setW(e.target.value)}
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">h</span>
+            <span className="text-text-secondary">h</span>
             <input
               type="number"
-              className="w-full rounded-lg border px-3 py-2 font-mono text-sm"
+              className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 font-mono text-sm text-text-primary"
               value={h}
               onChange={(e) => setH(e.target.value)}
             />
@@ -153,19 +153,19 @@ export default function KeyframeDialog() {
 
         <div className="mt-4 flex justify-end gap-2">
           <button
-            className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+            className="rounded-default border border-error px-3 py-2 text-sm font-medium uppercase tracking-button text-error hover:bg-error/10"
             onClick={handleDelete}
           >
             Delete
           </button>
           <button
-            className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+            className="rounded-default border border-border-subtle px-3 py-2 text-sm font-medium uppercase tracking-button text-text-primary hover:bg-white/10"
             onClick={handleCancel}
           >
             Cancel
           </button>
           <button
-            className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800"
+            className="rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/90"
             onClick={handleSave}
           >
             Save

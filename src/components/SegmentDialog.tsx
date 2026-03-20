@@ -63,20 +63,20 @@ export default function SegmentDialog() {
   return (
     <dialog
       ref={dialogRef}
-      className="w-[min(560px,92vw)] rounded-2xl border bg-white p-0 shadow-xl"
+      className="w-[min(560px,92vw)] rounded-default border border-border-dialog bg-surface p-0 shadow-elevation-8"
     >
       <div className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-base font-semibold">
+            <div className="text-base font-semibold text-text-primary">
               Segment {startId} &rarr; {endId}
             </div>
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-text-secondary">
               interval transition + derived ops (display-only)
             </div>
           </div>
           <button
-            className="rounded-lg border px-2 py-1 text-sm hover:bg-slate-50"
+            className="rounded-default border border-border-subtle px-2 py-1 text-sm text-text-primary hover:bg-white/10"
             onClick={handleCancel}
           >
             &#10005;
@@ -85,9 +85,9 @@ export default function SegmentDialog() {
 
         <div className="mt-4 grid grid-cols-1 gap-3">
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Transition style</span>
+            <span className="text-text-secondary">Transition style</span>
             <select
-              className="w-full rounded-lg border px-3 py-2 text-sm"
+              className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary"
               value={transition}
               onChange={(e) =>
                 setTransitionLocal(e.target.value as 'smooth' | 'cut')
@@ -99,13 +99,13 @@ export default function SegmentDialog() {
           </label>
 
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Derived operations</span>
+            <span className="text-text-secondary">Derived operations</span>
             <textarea
-              className="min-h-[84px] w-full rounded-lg border px-3 py-2 font-mono text-sm"
+              className="min-h-[84px] w-full rounded-default border border-border-subtle bg-readonly-bg px-3 py-2 font-mono text-sm text-readonly-text cursor-not-allowed"
               readOnly
               value={intentText}
             />
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-text-secondary">
               Derived ops are heuristic UI hints; not authoritative data.
             </div>
           </label>
@@ -113,13 +113,13 @@ export default function SegmentDialog() {
 
         <div className="mt-4 flex justify-end gap-2">
           <button
-            className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+            className="rounded-default border border-border-subtle px-3 py-2 text-sm font-medium uppercase tracking-button text-text-primary hover:bg-white/10"
             onClick={handleCancel}
           >
             Cancel
           </button>
           <button
-            className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800"
+            className="rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/90"
             onClick={handleSave}
           >
             Save

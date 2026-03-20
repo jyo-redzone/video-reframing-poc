@@ -1,0 +1,414 @@
+{
+  "tokens": {
+    "color": {
+      "brand": {
+        "primary": "#E4022C",
+        "secondary": "#E4022C",
+        "tertiary": "#E4022C"
+      },
+      "neutral": {
+        "appbarBackground": {
+          "light": "rgba(50,51,61,1)",
+          "dark": "#0C1116"
+        },
+        "backgroundGray": "#262A2E",
+        "drawerBackground": "rgba(255,255,255,1)",
+        "drawerText": "rgba(66,66,66,1)",
+        "drawerIcon": "rgba(97,97,97,1)",
+        "readonlyBackground": "#f5f5f5",
+        "readonlyText": "#757575"
+      },
+      "semantic": {
+        "success": null,
+        "warning": null,
+        "error": {
+          "light": "rgba(244,67,54,1)",
+          "dark": "rgba(246,78,98,1)"
+        },
+        "info": null,
+        "validInput": "#26b050",
+        "invalidInput": "#e50000"
+      },
+      "surface": {
+        "background": {
+          "light": "rgba(255,255,255,1)",
+          "dark": "#0F1820"
+        },
+        "surface": {
+          "light": "rgba(255,255,255,1)",
+          "dark": "#0C1116"
+        }
+      },
+      "text": {
+        "primary": {
+          "light": "rgba(66,66,66,1)",
+          "dark": "rgba(255,255,255,0.8)"
+        },
+        "secondary": {
+          "light": "rgba(0,0,0,0.54)",
+          "dark": "rgba(255,255,255,0.6)"
+        },
+        "disabled": {
+          "light": "rgba(0,0,0,0.38)",
+          "dark": "rgba(255,255,255,0.3)"
+        },
+        "appbar": "#FFFFFF",
+        "pageHeading": "rgba(255,255,255,0.8)"
+      },
+      "border": {
+        "divider": {
+          "light": "rgba(0,0,0,0.12)",
+          "dark": "rgba(255,255,255,0.12)"
+        },
+        "lines": {
+          "light": "rgba(0,0,0,0.12)",
+          "dark": "rgba(255,255,255,0.12)"
+        },
+        "dialog": "rgba(255,255,255,0.4)"
+      }
+    },
+    "typography": {
+      "fontFamily": {
+        "heading": "\"Open Sans\", \"Segoe UI\", \"Roboto\", \"Arial\", sans-serif",
+        "base": "\"Montserrat\", \"Segoe UI\", \"Roboto\", \"Arial\", sans-serif",
+        "mono": null
+      },
+      "fontSize": {
+        "h1": "6rem",
+        "h2": "3.75rem",
+        "h3": "3rem",
+        "h4": "2.125rem",
+        "h5": "1.5rem",
+        "h6": "1.25rem",
+        "subtitle1": "1rem",
+        "subtitle2": "0.875rem",
+        "body1": "1rem",
+        "body2": "0.875rem",
+        "caption": "0.75rem",
+        "button": "0.875rem",
+        "overline": "0.75rem"
+      },
+      "fontWeight": {
+        "light": "300",
+        "regular": "400",
+        "medium": "500",
+        "semibold": "600",
+        "bold": "700",
+        "extrabold": "800"
+      },
+      "lineHeight": {
+        "h1": "1.167",
+        "h2": "1.2",
+        "h3": "1.167",
+        "h4": "1.235",
+        "h5": "1.334",
+        "h6": "1.6",
+        "body1": "1.5",
+        "body2": "1.43",
+        "caption": "1.66"
+      },
+      "letterSpacing": null
+    },
+    "spacing": {
+      "base": "4px",
+      "1": "4px",
+      "2": "8px",
+      "3": "12px",
+      "4": "16px",
+      "5": "20px",
+      "6": "24px",
+      "8": "32px",
+      "10": "40px",
+      "12": "48px",
+      "16": "64px"
+    },
+    "radius": {
+      "default": "2px"
+    },
+    "elevation": {
+      "0": "none",
+      "1": "0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)",
+      "2": "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
+      "8": "0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12)"
+    }
+  },
+  "components": {
+    "appBar": {
+      "base": {
+        "background": {
+          "light": "color.neutral.appbarBackground.light",
+          "dark": "color.neutral.appbarBackground.dark"
+        },
+        "color": "color.text.appbar",
+        "elevation": "1"
+      }
+    },
+    "button": {
+      "base": {
+        "fontFamily": "typography.fontFamily.base",
+        "fontSize": "typography.fontSize.button",
+        "fontWeight": "typography.fontWeight.medium",
+        "borderRadius": "radius.default",
+        "letterSpacing": "0.02857em",
+        "textTransform": "uppercase"
+      },
+      "variants": {
+        "filled": {
+          "primary": {
+            "background": "color.brand.primary",
+            "color": "#FFFFFF"
+          }
+        },
+        "outlined": {
+          "primary": {
+            "background": "transparent",
+            "color": "color.brand.primary",
+            "border": {
+              "width": "1px",
+              "style": "solid",
+              "color": "color.brand.primary"
+            }
+          }
+        },
+        "text": {
+          "primary": {
+            "background": "transparent",
+            "color": "color.brand.primary"
+          }
+        }
+      },
+      "states": {
+        "disabled": {
+          "opacity": "0.38",
+          "cursor": "not-allowed"
+        }
+      }
+    },
+    "card": {
+      "base": {
+        "background": "color.surface.surface",
+        "borderRadius": "radius.default",
+        "elevation": "1"
+      },
+      "variants": {
+        "contrast": {
+          "background": "color.surface.surface"
+        }
+      },
+      "states": {
+        "inactive": {
+          "opacity": "0.6"
+        }
+      }
+    },
+    "dialog": {
+      "base": {
+        "borderRadius": "radius.default",
+        "border": {
+          "width": "1px",
+          "style": "solid",
+          "color": "color.border.dialog"
+        }
+      },
+      "backdrop": {
+        "backdropFilter": "blur(10px)"
+      }
+    },
+    "drawer": {
+      "base": {
+        "background": "color.neutral.drawerBackground",
+        "color": "color.neutral.drawerText",
+        "iconColor": "color.neutral.drawerIcon",
+        "elevation": "2"
+      }
+    },
+    "navigation": {
+      "base": {
+        "fontWeight": "typography.fontWeight.semibold"
+      },
+      "states": {
+        "hover": {
+          "color": "color.brand.primary",
+          "textDecoration": "underline",
+          "textUnderlineOffset": "6px",
+          "fontWeight": "typography.fontWeight.semibold"
+        },
+        "active": {
+          "color": "color.brand.primary",
+          "textDecoration": "underline",
+          "textUnderlineOffset": "6px",
+          "fontWeight": "typography.fontWeight.semibold"
+        }
+      }
+    },
+    "table": {
+      "heading": {
+        "background": "action-default-hover",
+        "fontFamily": "typography.fontFamily.heading",
+        "fontWeight": "typography.fontWeight.bold",
+        "textTransform": "uppercase"
+      },
+      "row": {
+        "cursor": "pointer"
+      },
+      "states": {
+        "inactive": {
+          "opacity": "0.6",
+          "background": "background-grey"
+        }
+      }
+    },
+    "input": {
+      "base": {
+        "variant": "outlined",
+        "borderRadius": "radius.default"
+      },
+      "states": {
+        "readonly": {
+          "background": "color.neutral.readonlyBackground",
+          "color": "color.neutral.readonlyText",
+          "cursor": "not-allowed"
+        },
+        "valid": {
+          "outline": {
+            "width": "1px",
+            "style": "solid",
+            "color": "color.semantic.validInput"
+          }
+        },
+        "invalid": {
+          "outline": {
+            "width": "1px",
+            "style": "solid",
+            "color": "color.semantic.invalidInput"
+          }
+        }
+      }
+    },
+    "chip": {
+      "base": {
+        "borderRadius": "radius.default"
+      },
+      "variants": {
+        "filled": {},
+        "outlined": {}
+      }
+    },
+    "alert": {
+      "severities": {
+        "success": null,
+        "warning": null,
+        "error": "color.semantic.error",
+        "info": null
+      }
+    },
+    "typography": {
+      "h1": {
+        "fontFamily": "typography.fontFamily.heading",
+        "fontSize": "typography.fontSize.h1",
+        "fontWeight": "typography.fontWeight.light",
+        "lineHeight": "typography.lineHeight.h1"
+      },
+      "h2": {
+        "fontFamily": "typography.fontFamily.heading",
+        "fontSize": "typography.fontSize.h2",
+        "fontWeight": "typography.fontWeight.light",
+        "lineHeight": "typography.lineHeight.h2"
+      },
+      "h3": {
+        "fontFamily": "typography.fontFamily.heading",
+        "fontSize": "typography.fontSize.h3",
+        "fontWeight": "typography.fontWeight.regular",
+        "lineHeight": "typography.lineHeight.h3"
+      },
+      "h4": {
+        "fontFamily": "typography.fontFamily.heading",
+        "fontSize": "typography.fontSize.h4",
+        "fontWeight": "typography.fontWeight.regular",
+        "lineHeight": "typography.lineHeight.h4"
+      },
+      "h5": {
+        "fontFamily": "typography.fontFamily.heading",
+        "fontSize": "typography.fontSize.h5",
+        "fontWeight": "typography.fontWeight.regular",
+        "lineHeight": "typography.lineHeight.h5"
+      },
+      "h6": {
+        "fontFamily": "typography.fontFamily.heading",
+        "fontSize": "typography.fontSize.h6",
+        "fontWeight": "typography.fontWeight.medium",
+        "lineHeight": "typography.lineHeight.h6"
+      },
+      "body1": {
+        "fontFamily": "typography.fontFamily.base",
+        "fontSize": "typography.fontSize.body1",
+        "fontWeight": "typography.fontWeight.regular",
+        "lineHeight": "typography.lineHeight.body1"
+      },
+      "body2": {
+        "fontFamily": "typography.fontFamily.base",
+        "fontSize": "typography.fontSize.body2",
+        "fontWeight": "typography.fontWeight.regular",
+        "lineHeight": "typography.lineHeight.body2"
+      },
+      "caption": {
+        "fontFamily": "typography.fontFamily.base",
+        "fontSize": "typography.fontSize.caption",
+        "fontWeight": "typography.fontWeight.regular",
+        "lineHeight": "typography.lineHeight.caption"
+      },
+      "cardHeading": {
+        "fontWeight": "typography.fontWeight.extrabold",
+        "textTransform": "uppercase"
+      },
+      "pageHeading": {
+        "fontWeight": "typography.fontWeight.extrabold",
+        "textTransform": "uppercase",
+        "color": "color.text.pageHeading"
+      }
+    },
+    "videoPlayer": {
+      "base": {
+        "width": "100%",
+        "maxWidth": "100%",
+        "height": "auto"
+      },
+      "responsive": {
+        "mobile": {
+          "maxHeight": "50vh",
+          "breakpoint": "600px"
+        }
+      }
+    },
+    "errorBoundary": {
+      "base": {
+        "background": "#b32121",
+        "color": "#FFFFFF",
+        "padding": {
+          "top": "1rem",
+          "right": "1rem",
+          "bottom": "1rem",
+          "left": "3.7rem"
+        }
+      }
+    }
+  },
+  "rules": [
+    "Spacing follows a 4px base grid (MudBlazor spacing utilities: pa-1=4px through pa-16=64px)",
+    "Brand color #E4022C is used uniformly for Primary, Secondary, and Tertiary — single brand color identity",
+    "Default border radius is 2px for all components (set globally via LayoutProperties.DefaultBorderRadius)",
+    "Headings (H1-H6) use 'Open Sans' font family; body/default text uses 'Montserrat'",
+    "Drawer maintains light theme appearance in both light and dark modes (white background, dark text)",
+    "Navigation active/hover state uses brand primary color with underline decoration (6px offset)",
+    "Navigation link text uses font-weight 600 (semibold)",
+    "Table headings use uppercase text transform with font-weight 700 (bold) in Open Sans",
+    "Card and page headings use uppercase text transform with font-weight 800 (extrabold)",
+    "Inactive/disabled entity rows and cards use opacity 0.6",
+    "Dialogs use backdrop blur (10px) with a 1px white semi-transparent border",
+    "Login page always renders in dark mode regardless of user preference",
+    "Read-only form fields use gray background (#f5f5f5) and gray text (#757575) with not-allowed cursor",
+    "MudContainer uses MaxWidth.ExtraExtraLarge for main content area with pa-4 padding",
+    "App uses dual-mode theming (light/dark) with user preference persisted to database",
+    "Main content area has pt-16 (64px) padding-top to clear the AppBar"
+  ]
+}

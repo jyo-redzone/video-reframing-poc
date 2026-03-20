@@ -1,1 +1,59 @@
 @import "tailwindcss";
+
+@theme {
+  /* Brand */
+  --color-brand: #E4022C;
+
+  /* Surfaces (dark mode) */
+  --color-appbar: #0C1116;
+  --color-surface: #0F1820;
+  --color-surface-raised: #0C1116;
+  --color-bg: #262A2E;
+
+  /* Text (dark mode) */
+  --color-text-primary: rgba(255, 255, 255, 0.8);
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-text-disabled: rgba(255, 255, 255, 0.3);
+
+  /* Borders */
+  --color-border-subtle: rgba(255, 255, 255, 0.12);
+  --color-border-dialog: rgba(255, 255, 255, 0.4);
+
+  /* Readonly state */
+  --color-readonly-bg: #f5f5f5;
+  --color-readonly-text: #757575;
+
+  /* Error */
+  --color-error: rgba(246, 78, 98, 1);
+
+  /* Typography */
+  --font-heading: "Open Sans", "Segoe UI", "Roboto", "Arial", sans-serif;
+  --font-base: "Montserrat", "Segoe UI", "Roboto", "Arial", sans-serif;
+
+  /* Radius */
+  --radius-default: 2px;
+
+  /* Button letter-spacing */
+  --tracking-button: 0.02857em;
+
+  /* Elevation shadows */
+  --shadow-elevation-1: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+  --shadow-elevation-2: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);
+  --shadow-elevation-8: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-base);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* Dialog backdrop: blur per design system */
+  dialog::backdrop {
+    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.6);
+  }
+}
