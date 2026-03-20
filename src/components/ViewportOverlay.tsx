@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useAppStore from '../store/useAppStore';
 import { resolve } from '../engine/cre';
-import { sourceToPercent } from '../utils/coordinates';
+import { sourceToPercent, getVideoRenderArea } from '../utils/coordinates';
 import type { SourceRect } from '../types';
 
 type Corner = 'nw' | 'ne' | 'sw' | 'se';
@@ -70,13 +70,16 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
       const containerBounds = containerRef.current.getBoundingClientRect();
       const containerW = containerBounds.width;
       const containerH = containerBounds.height;
+      const { renderWidth, renderHeight } = getVideoRenderArea(
+        containerW, containerH, videoWidth, videoHeight,
+      );
 
       const dx = e.clientX - interaction.startMouse.x;
       const dy = e.clientY - interaction.startMouse.y;
 
-      // Convert pixel deltas to source coords
-      const dxSource = (dx / containerW) * videoWidth;
-      const dySource = (dy / containerH) * videoHeight;
+      // Convert pixel deltas to source coords using render dimensions (not container)
+      const dxSource = (dx / renderWidth) * videoWidth;
+      const dySource = (dy / renderHeight) * videoHeight;
 
       if (interaction.type === 'drag') {
         const newRect: SourceRect = {
@@ -185,7 +188,10 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
   if (mode === 'view' && viewType === 'preview') return null;
   if (!displayRect || !videoMetadata) return null;
 
-  const pct = sourceToPercent(displayRect, videoWidth, videoHeight);
+  const container = containerRef.current;
+  if (!container) return null;
+  const { width: cW, height: cH } = container.getBoundingClientRect();
+  const pct = sourceToPercent(displayRect, videoWidth, videoHeight, cW, cH);
 
   const handleDragStart = (e: React.MouseEvent) => {
     // Prevent if clicking on a resize handle

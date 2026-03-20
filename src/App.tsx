@@ -12,18 +12,20 @@ function AppContent() {
   usePlayback();
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary">
+    <div className="h-screen overflow-hidden flex flex-col bg-bg text-text-primary">
       <TopBar />
-      <main className="mx-auto grid max-w-7xl grid-cols-12 gap-4 px-4 py-4">
-        <section className="col-span-12 lg:col-span-8">
-          <PlayerPanel />
-        </section>
-        <aside className="col-span-12 lg:col-span-4">
+      <main className="flex-1 min-h-0 flex gap-2 px-2 py-2">
+        {/* Left column: video on top, timeline directly below */}
+        <div className="flex-1 min-h-0 flex flex-col gap-2">
+          <div className="flex-1 min-h-0">
+            <PlayerPanel />
+          </div>
+          <TimelineBar />
+        </div>
+        {/* Right column: track panel */}
+        <aside className="w-72 shrink-0 overflow-y-auto border-l border-border-subtle">
           <TrackPanel />
         </aside>
-        <section className="col-span-12">
-          <TimelineBar />
-        </section>
       </main>
       <KeyframeDialog />
       <SegmentDialog />

@@ -6,9 +6,9 @@
 
   /* Surfaces (dark mode) */
   --color-appbar: #0C1116;
-  --color-surface: #0F1820;
+  --color-surface: #0C1116;
   --color-surface-raised: #0C1116;
-  --color-bg: #262A2E;
+  --color-bg: #0F1820;
 
   /* Text (dark mode) */
   --color-text-primary: rgba(255, 255, 255, 0.8);

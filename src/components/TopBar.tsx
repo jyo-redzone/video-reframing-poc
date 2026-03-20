@@ -22,11 +22,9 @@ export default function TopBar() {
   return (
     <header className="sticky top-0 z-40 border-b border-border-subtle bg-appbar">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <span className="text-sm text-text-secondary">Video:</span>
-          <span className="rounded-default bg-white/10 px-2 py-1 text-sm font-medium text-text-primary">
-            {videoName}
-          </span>
+          <span className="text-sm font-medium text-text-primary">{videoName}</span>
         </div>
         <nav className="flex items-center gap-2">
           <button

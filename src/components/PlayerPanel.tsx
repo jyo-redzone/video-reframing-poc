@@ -1,10 +1,10 @@
 import { useRef } from 'react';
 import useAppStore from '../store/useAppStore';
 import { useVideoRef } from './VideoRefContext';
-import PlaybackControls from './PlaybackControls';
 import ViewportOverlay from './ViewportOverlay';
 import BoundingBoxTool from './BoundingBoxTool';
 import PreviewCanvas from './PreviewCanvas';
+import PlaybackControls from './PlaybackControls';
 
 export default function PlayerPanel() {
   const videoRef = useVideoRef();
@@ -29,7 +29,7 @@ export default function PlayerPanel() {
       height: videoHeight,
       fps: 29.97,
       duration,
-      url: '/assets/sample-video.mp4',
+      url: '/assets/default.mp4',
     });
 
     setViewportRect({
@@ -41,24 +41,24 @@ export default function PlayerPanel() {
   };
 
   return (
-    <div className="rounded-default border border-border-subtle bg-surface shadow-elevation-1">
-      <div className="p-4">
-        <div
-          ref={containerRef}
-          className="relative aspect-video w-full overflow-hidden rounded-default border border-border-subtle bg-appbar"
-        >
-          <video
-            ref={videoRef}
-            src="/assets/sample-video.mp4"
-            preload="auto"
-            className="h-full w-full object-contain"
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={() => setIsPlaying(false)}
-          />
-          {showPreview && <PreviewCanvas containerRef={containerRef} />}
-          <BoundingBoxTool containerRef={containerRef} />
-          <ViewportOverlay containerRef={containerRef} />
-        </div>
+    <div className="h-full flex flex-col rounded-default overflow-hidden">
+      <div
+        ref={containerRef}
+        className="flex-1 min-h-0 relative bg-appbar"
+      >
+        <video
+          ref={videoRef}
+          src="/assets/default.mp4"
+          preload="auto"
+          className="h-full w-full object-contain"
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={() => setIsPlaying(false)}
+        />
+        {showPreview && <PreviewCanvas containerRef={containerRef} />}
+        <BoundingBoxTool containerRef={containerRef} />
+        <ViewportOverlay containerRef={containerRef} />
+      </div>
+      <div className="shrink-0 border-t border-border-subtle bg-surface-raised px-3 py-1.5">
         <PlaybackControls />
       </div>
     </div>
