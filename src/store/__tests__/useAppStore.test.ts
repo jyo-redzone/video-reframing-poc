@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import useAppStore from '../useAppStore';
-import type { Keyframe } from '../../types';
+import type { Keyframe, VideoMetadata } from '../../types';
 
 // Helper to build a keyframe with sensible defaults
 function makeKf(overrides: Partial<Keyframe> & { id: string; time: number }): Keyframe {
@@ -12,12 +12,34 @@ function makeKf(overrides: Partial<Keyframe> & { id: string; time: number }): Ke
   };
 }
 
+function makeMetadata(overrides: Partial<VideoMetadata> = {}): VideoMetadata {
+  return {
+    id: 'vid1',
+    name: 'test.mp4',
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    duration: 60,
+    url: 'blob:test',
+    ...overrides,
+  };
+}
+
+const DEFAULT_TRACK = {
+  id: 'track_default',
+  videoId: '',
+  name: 'Ball follow',
+  keyframes: [],
+  range: { inTime: 0, outTime: 0 },
+};
+
 describe('useAppStore keyframe actions', () => {
   beforeEach(() => {
     // Reset the store to its initial state before each test
     useAppStore.setState({
-      tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [] }],
+      tracks: [{ ...DEFAULT_TRACK }],
       activeTrackId: 'track_default',
+      videoMetadata: null,
     });
   });
 
@@ -95,5 +117,90 @@ describe('useAppStore keyframe actions', () => {
     expect(kfs[0].transitionToNext).toBe('smooth');
     // kf3 remains the last KF — still null as before
     expect(kfs[1].transitionToNext).toBeNull();
+  });
+});
+
+describe('useAppStore clip range', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      tracks: [{ ...DEFAULT_TRACK }],
+      activeTrackId: 'track_default',
+      videoMetadata: null,
+    });
+  });
+
+  // ── default range ──────────────────────────────────────────────────
+
+  it('default track has range {inTime: 0, outTime: 0}', () => {
+    const { tracks } = useAppStore.getState();
+    expect(tracks[0].range).toEqual({ inTime: 0, outTime: 0 });
+  });
+
+  // ── setVideoMetadata auto-default ─────────────────────────────────
+
+  it('setVideoMetadata auto-sets range to {0, duration} when range is still {0, 0}', () => {
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+
+    const track = useAppStore.getState().tracks[0];
+    expect(track.range).toEqual({ inTime: 0, outTime: 60 });
+  });
+
+  it('setVideoMetadata does not overwrite a user-set range', () => {
+    // First load sets range to {0, 60}
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+    // User adjusts range
+    useAppStore.getState().setTrackRange(5, 45);
+
+    // Re-loading metadata (e.g. same video, metadata event fires again) must not clobber range
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+
+    const track = useAppStore.getState().tracks[0];
+    expect(track.range).toEqual({ inTime: 5, outTime: 45 });
+  });
+
+  it('setVideoMetadata is idempotent when called multiple times with range still unset', () => {
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+
+    const track = useAppStore.getState().tracks[0];
+    expect(track.range).toEqual({ inTime: 0, outTime: 60 });
+  });
+
+  // ── setTrackRange ──────────────────────────────────────────────────
+
+  it('setTrackRange sets inTime and outTime correctly', () => {
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+    useAppStore.getState().setTrackRange(10, 30);
+
+    const track = useAppStore.getState().tracks[0];
+    expect(track.range).toEqual({ inTime: 10, outTime: 30 });
+  });
+
+  it('setTrackRange clamps inTime to 0 when negative', () => {
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+    useAppStore.getState().setTrackRange(-5, 30);
+
+    const track = useAppStore.getState().tracks[0];
+    expect(track.range.inTime).toBe(0);
+    expect(track.range.outTime).toBe(30);
+  });
+
+  it('setTrackRange clamps outTime to duration', () => {
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+    useAppStore.getState().setTrackRange(10, 100);
+
+    const track = useAppStore.getState().tracks[0];
+    expect(track.range.inTime).toBe(10);
+    expect(track.range.outTime).toBe(60);
+  });
+
+  it('setTrackRange ensures inTime <= outTime when inverted', () => {
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+    useAppStore.getState().setTrackRange(40, 10);
+
+    const track = useAppStore.getState().tracks[0];
+    expect(track.range.inTime).toBeLessThanOrEqual(track.range.outTime);
+    expect(track.range.inTime).toBe(10);
+    expect(track.range.outTime).toBe(40);
   });
 });

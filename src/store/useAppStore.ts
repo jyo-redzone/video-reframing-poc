@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { VideoMetadata, Track, Keyframe, SourceRect } from '../types';
 
+const UNSET_RANGE = { inTime: 0, outTime: 0 } as const;
+
 type AppState = {
   // Video
   videoMetadata: VideoMetadata | null;
@@ -28,6 +30,9 @@ type AppState = {
 type AppActions = {
   // Video
   setVideoMetadata: (meta: VideoMetadata) => void;
+
+  // Track range
+  setTrackRange: (inTime: number, outTime: number) => void;
 
   // Keyframes
   addKeyframe: (kf: Keyframe) => void;
@@ -63,7 +68,7 @@ const sortByTime = (keyframes: Keyframe[]): Keyframe[] =>
 const useAppStore = create<AppState & AppActions>()((set, get) => ({
   // ── Initial state ──────────────────────────────────────────────────
   videoMetadata: null,
-  tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [] }],
+  tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [], range: { inTime: 0, outTime: 0 } }],
   activeTrackId: 'track_default',
   mode: 'edit',
   viewType: 'source',
@@ -74,7 +79,44 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   selectedSegmentKey: null,
 
   // ── Video ──────────────────────────────────────────────────────────
-  setVideoMetadata: (meta) => set({ videoMetadata: meta }),
+  setVideoMetadata: (meta) =>
+    set((state) => {
+      const activeTrack = state.tracks.find((t) => t.id === state.activeTrackId);
+      const rangeIsUnset =
+        activeTrack?.range.inTime === UNSET_RANGE.inTime &&
+        activeTrack?.range.outTime === UNSET_RANGE.outTime;
+
+      if (!rangeIsUnset) {
+        return { videoMetadata: meta };
+      }
+
+      return {
+        videoMetadata: meta,
+        tracks: state.tracks.map((track) =>
+          track.id === state.activeTrackId
+            ? { ...track, range: { inTime: 0, outTime: meta.duration } }
+            : track,
+        ),
+      };
+    }),
+
+  // ── Track range ────────────────────────────────────────────────────
+  setTrackRange: (inTime, outTime) =>
+    set((state) => {
+      const duration = state.videoMetadata?.duration ?? Infinity;
+      const clampedIn = Math.max(0, Math.min(inTime, duration));
+      const clampedOut = Math.max(0, Math.min(outTime, duration));
+      const finalIn = Math.min(clampedIn, clampedOut);
+      const finalOut = Math.max(clampedIn, clampedOut);
+
+      return {
+        tracks: state.tracks.map((track) =>
+          track.id === state.activeTrackId
+            ? { ...track, range: { inTime: finalIn, outTime: finalOut } }
+            : track,
+        ),
+      };
+    }),
 
   // ── Keyframes ──────────────────────────────────────────────────────
   addKeyframe: (kf) =>

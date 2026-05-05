@@ -1,5 +1,14 @@
 import useAppStore from '../store/useAppStore';
 
+function formatMmSs(seconds: number): string {
+  const totalSeconds = Math.floor(Math.max(0, seconds));
+  const mm = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const ss = (totalSeconds % 60).toString().padStart(2, '0');
+  return `${mm}:${ss}`;
+}
+
 export default function TrackPanel() {
   const mode = useAppStore((s) => s.mode);
   const viewType = useAppStore((s) => s.viewType);
@@ -10,6 +19,10 @@ export default function TrackPanel() {
   const activeTrackId = useAppStore((s) => s.activeTrackId);
   const addKeyframe = useAppStore((s) => s.addKeyframe);
   const selectKeyframe = useAppStore((s) => s.selectKeyframe);
+  const activeTrackRange = useAppStore((s) => {
+    const track = s.tracks.find((t) => t.id === s.activeTrackId);
+    return track?.range ?? { inTime: 0, outTime: 0 };
+  });
 
   const handleAddManualKF = () => {
     if (!viewportRect) return;
@@ -96,38 +109,19 @@ export default function TrackPanel() {
 
       <div className="border-t border-border-subtle" />
 
-      {/* Export ranges */}
+      {/* Clip range — read-only display */}
       <div className="space-y-2">
-        <div className="text-sm font-semibold text-text-primary">Export ranges</div>
-        <div className="space-y-0.5">
-          <div className="flex items-center justify-between py-1.5">
-            <div className="text-sm text-text-primary">
-              <span className="font-medium">R1:</span>{' '}
-              <span className="font-mono">00:10 - 00:20</span>
-            </div>
-            <button
-              className="rounded-default px-2 py-1 text-sm text-text-secondary hover:bg-white/10"
-              title="Edit"
-            >
-              &#x270E;
-            </button>
-          </div>
-          <div className="flex items-center justify-between py-1.5">
-            <div className="text-sm text-text-primary">
-              <span className="font-medium">R2:</span>{' '}
-              <span className="font-mono">00:30 - 00:35</span>
-            </div>
-            <button
-              className="rounded-default px-2 py-1 text-sm text-text-secondary hover:bg-white/10"
-              title="Edit"
-            >
-              &#x270E;
-            </button>
-          </div>
+        <div className="text-sm font-semibold text-text-primary">Clip range</div>
+        <div className="flex items-center gap-4 py-1.5 text-sm text-text-primary">
+          <span>
+            <span className="text-text-secondary">In:</span>{' '}
+            <span className="font-mono">{formatMmSs(activeTrackRange.inTime)}</span>
+          </span>
+          <span>
+            <span className="text-text-secondary">Out:</span>{' '}
+            <span className="font-mono">{formatMmSs(activeTrackRange.outTime)}</span>
+          </span>
         </div>
-        <button className="w-full rounded-default border border-border-subtle px-3 py-2 text-sm font-medium uppercase tracking-button text-text-secondary hover:bg-white/10">
-          + Add range
-        </button>
         <button
           className="w-full rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/90"
           onClick={() => window.alert('Export not available in POC')}

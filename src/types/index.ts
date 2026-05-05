@@ -13,11 +13,17 @@ export type Keyframe = {
   transitionToNext: 'smooth' | 'cut' | null; // null = last keyframe
 };
 
+export type ClipRange = {
+  inTime: number;
+  outTime: number;
+};
+
 export type Track = {
   id: string;
   videoId: string;
   name: string;
   keyframes: Keyframe[]; // kept sorted by time
+  range: ClipRange;
 };
 
 export type Segment = {
