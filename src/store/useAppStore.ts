@@ -40,6 +40,9 @@ type AppActions = {
   deleteKeyframe: (id: string) => void;
   getActiveKeyframes: () => Keyframe[];
 
+  // Selection
+  getSelectedKeyframe: () => Keyframe | null;
+
   // Segments (transition changes)
   setTransition: (keyframeId: string, transition: 'smooth' | 'cut') => void;
 
@@ -157,6 +160,27 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   getActiveKeyframes: () => {
     const state = get();
     return state.tracks.find((t) => t.id === state.activeTrackId)?.keyframes ?? [];
+  },
+
+  getSelectedKeyframe: () => {
+    const state = get();
+    const keyframes = state.tracks.find((t) => t.id === state.activeTrackId)?.keyframes ?? [];
+    const { currentTime, videoMetadata } = state;
+
+    const epsilon = videoMetadata != null ? 0.5 / videoMetadata.fps : 0.02;
+
+    let best: Keyframe | null = null;
+    let bestDist = Infinity;
+
+    for (const kf of keyframes) {
+      const dist = Math.abs(kf.time - currentTime);
+      if (dist <= epsilon && dist < bestDist) {
+        best = kf;
+        bestDist = dist;
+      }
+    }
+
+    return best;
   },
 
   // ── Segments ───────────────────────────────────────────────────────

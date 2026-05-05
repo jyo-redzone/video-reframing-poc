@@ -120,6 +120,121 @@ describe('useAppStore keyframe actions', () => {
   });
 });
 
+describe('useAppStore getSelectedKeyframe', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      tracks: [{ ...DEFAULT_TRACK }],
+      activeTrackId: 'track_default',
+      videoMetadata: null,
+      currentTime: 0,
+    });
+  });
+
+  it('returns null when there are no keyframes', () => {
+    useAppStore.setState({ currentTime: 1 });
+    expect(useAppStore.getState().getSelectedKeyframe()).toBeNull();
+  });
+
+  it('returns null when playhead is between keyframes (outside epsilon)', () => {
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+    addKeyframe(makeKf({ id: 'kf2', time: 3 }));
+
+    useAppStore.setState({ currentTime: 2, videoMetadata: makeMetadata({ fps: 30 }) });
+
+    expect(useAppStore.getState().getSelectedKeyframe()).toBeNull();
+  });
+
+  it('returns the keyframe when playhead matches time exactly', () => {
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+
+    useAppStore.setState({ currentTime: 1, videoMetadata: makeMetadata({ fps: 30 }) });
+
+    const selected = useAppStore.getState().getSelectedKeyframe();
+    expect(selected?.id).toBe('kf1');
+  });
+
+  it('returns the keyframe when playhead is within epsilon (fps-based)', () => {
+    // With fps=30, epsilon = 0.5/30 ≈ 0.0167s
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+
+    const epsilon = 0.5 / 30;
+    // Just inside epsilon
+    useAppStore.setState({
+      currentTime: 1 + epsilon * 0.9,
+      videoMetadata: makeMetadata({ fps: 30 }),
+    });
+
+    expect(useAppStore.getState().getSelectedKeyframe()?.id).toBe('kf1');
+  });
+
+  it('returns null when playhead is just outside epsilon', () => {
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+
+    const epsilon = 0.5 / 30;
+    useAppStore.setState({
+      currentTime: 1 + epsilon * 1.1,
+      videoMetadata: makeMetadata({ fps: 30 }),
+    });
+
+    expect(useAppStore.getState().getSelectedKeyframe()).toBeNull();
+  });
+
+  it('picks the closer of two candidates when both fall within epsilon', () => {
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1.000 }));
+    addKeyframe(makeKf({ id: 'kf2', time: 1.010 }));
+
+    // With fps=1000, epsilon = 0.0005 — only kf1 is within epsilon at time 1.001
+    // With fps=30, epsilon ≈ 0.0167 — both are within epsilon at time 1.006
+    useAppStore.setState({
+      currentTime: 1.006,
+      videoMetadata: makeMetadata({ fps: 30 }),
+    });
+
+    // kf2 at 1.010 is 0.004 away; kf1 at 1.000 is 0.006 away — kf2 is closer
+    const selected = useAppStore.getState().getSelectedKeyframe();
+    expect(selected?.id).toBe('kf2');
+  });
+
+  it('falls back to 0.02 epsilon when videoMetadata is null', () => {
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+
+    // 0.02 fallback — time within 0.018 should match
+    useAppStore.setState({ currentTime: 1.018, videoMetadata: null });
+
+    expect(useAppStore.getState().getSelectedKeyframe()?.id).toBe('kf1');
+  });
+
+  it('falls back to 0.02 epsilon — time beyond 0.02 should not match', () => {
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+
+    useAppStore.setState({ currentTime: 1.025, videoMetadata: null });
+
+    expect(useAppStore.getState().getSelectedKeyframe()).toBeNull();
+  });
+
+  it('returns null after the selected keyframe is deleted (delete-then-arrow path)', () => {
+    const { addKeyframe, deleteKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+
+    useAppStore.setState({ currentTime: 1, videoMetadata: makeMetadata({ fps: 30 }) });
+
+    // Confirm it's selected before delete
+    expect(useAppStore.getState().getSelectedKeyframe()?.id).toBe('kf1');
+
+    deleteKeyframe('kf1');
+
+    // After delete, selection must be null even though playhead hasn't moved
+    expect(useAppStore.getState().getSelectedKeyframe()).toBeNull();
+  });
+});
+
 describe('useAppStore clip range', () => {
   beforeEach(() => {
     useAppStore.setState({

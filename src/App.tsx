@@ -5,9 +5,11 @@ import PlayerPanel from './components/PlayerPanel';
 import TimelineBar from './components/TimelineBar';
 import { VideoRefProvider } from './components/VideoRefContext';
 import usePlayback from './hooks/usePlayback';
+import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 
 function AppContent() {
   usePlayback();
+  useKeyboardShortcuts();
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-bg text-text-primary">
