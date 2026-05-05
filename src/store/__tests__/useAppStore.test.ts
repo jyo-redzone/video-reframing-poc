@@ -421,3 +421,134 @@ describe('useAppStore recording state machine', () => {
     expect(useAppStore.getState().mode).toBe('view');
   });
 });
+
+// ── commitKeyframeAtTime ───────────────────────────────────────────────────────
+
+const RECT_A: ReturnType<typeof VIEWPORT_RECT.valueOf> = { x: 0, y: 0, width: 640, height: 360 };
+const RECT_B = { x: 10, y: 20, width: 320, height: 180 };
+
+describe('useAppStore commitKeyframeAtTime', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [], range: { inTime: 0, outTime: 0 } }],
+      activeTrackId: 'track_default',
+      videoMetadata: makeMetadata({ fps: 30 }),
+    });
+  });
+
+  it('appends a new keyframe when list is empty', () => {
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs).toHaveLength(1);
+    expect(kfs[0].time).toBe(1.0);
+    expect(kfs[0].sourceRect).toEqual(RECT_A);
+    expect(kfs[0].transitionToNext).toBeNull(); // last kf → null
+  });
+
+  it('appended first keyframe has transitionToNext null; second appended gets transition to null too', () => {
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    useAppStore.getState().commitKeyframeAtTime(3.0, RECT_B);
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs).toHaveLength(2);
+    // kf at t=1 must now have transitionToNext = 'smooth' (no longer last)
+    expect(kfs[0].transitionToNext).toBe('smooth');
+    // kf at t=3 is last → null
+    expect(kfs[1].transitionToNext).toBeNull();
+  });
+
+  it('inserting a kf before the last kf does not change existing transitionToNext values', () => {
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    useAppStore.getState().commitKeyframeAtTime(3.0, RECT_B);
+    // Insert in middle at t=2.0
+    useAppStore.getState().commitKeyframeAtTime(2.0, RECT_A);
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs).toHaveLength(3);
+    expect(kfs.map((k) => k.time)).toEqual([1.0, 2.0, 3.0]);
+    // Existing kfs' transitionToNext must not have been changed
+    expect(kfs[0].transitionToNext).toBe('smooth');
+    expect(kfs[1].transitionToNext).toBe('smooth'); // newly inserted middle
+    expect(kfs[2].transitionToNext).toBeNull(); // last remains null
+  });
+
+  it('updates in place when time is within epsilon of an existing keyframe', () => {
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    const originalId = useAppStore.getState().getActiveKeyframes()[0].id;
+    const epsilon = 0.5 / 30; // ≈ 0.0167
+    // Write just inside epsilon
+    useAppStore.getState().commitKeyframeAtTime(1.0 + epsilon * 0.9, RECT_B);
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs).toHaveLength(1); // no new kf appended
+    expect(kfs[0].id).toBe(originalId); // same kf
+    expect(kfs[0].sourceRect).toEqual(RECT_B); // sourceRect updated
+    expect(kfs[0].time).toBe(1.0); // time not changed
+  });
+
+  it('appends a new keyframe when time is just outside epsilon', () => {
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    const epsilon = 0.5 / 30;
+    useAppStore.getState().commitKeyframeAtTime(1.0 + epsilon * 1.1, RECT_B);
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs).toHaveLength(2);
+  });
+
+  it('keeps keyframes sorted by time after append', () => {
+    useAppStore.getState().commitKeyframeAtTime(5.0, RECT_A);
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_B);
+    useAppStore.getState().commitKeyframeAtTime(3.0, RECT_A);
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs.map((k) => k.time)).toEqual([1.0, 3.0, 5.0]);
+  });
+
+  it('uses fallback epsilon when videoMetadata is null', () => {
+    useAppStore.setState({ videoMetadata: null });
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    const originalId = useAppStore.getState().getActiveKeyframes()[0].id;
+    // 0.018 < 0.02 fallback — should update in place
+    useAppStore.getState().commitKeyframeAtTime(1.018, RECT_B);
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs).toHaveLength(1);
+    expect(kfs[0].id).toBe(originalId);
+    expect(kfs[0].sourceRect).toEqual(RECT_B);
+  });
+});
+
+describe('useAppStore startRecording snapshot', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [], range: { inTime: 0, outTime: 0 } }],
+      activeTrackId: 'track_default',
+      videoMetadata: makeMetadata({ fps: 30 }),
+      recordingState: 'idle',
+      currentTime: 2.5,
+      viewportRect: RECT_A,
+    });
+  });
+
+  it('startRecording writes one keyframe at currentTime', () => {
+    useAppStore.getState().startRecording();
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs).toHaveLength(1);
+    expect(kfs[0].time).toBe(2.5);
+    expect(kfs[0].sourceRect).toEqual(RECT_A);
+  });
+
+  it('startRecording writes no keyframe when viewportRect is null', () => {
+    useAppStore.setState({ viewportRect: null });
+    useAppStore.getState().startRecording();
+    expect(useAppStore.getState().getActiveKeyframes()).toHaveLength(0);
+    expect(useAppStore.getState().recordingState).toBe('idle');
+  });
+
+  it('snapshot updates an existing near-time keyframe rather than appending', () => {
+    // Pre-seed a keyframe at nearly the same time
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'pre', time: 2.5, sourceRect: RECT_B }));
+
+    useAppStore.getState().startRecording();
+
+    const kfs = useAppStore.getState().getActiveKeyframes();
+    expect(kfs).toHaveLength(1);
+    expect(kfs[0].id).toBe('pre'); // updated in place
+    expect(kfs[0].sourceRect).toEqual(RECT_A); // new rect from viewportRect
+  });
+});

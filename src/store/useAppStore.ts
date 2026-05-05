@@ -42,6 +42,7 @@ type AppActions = {
   ) => void;
   deleteKeyframe: (id: string) => void;
   getActiveKeyframes: () => Keyframe[];
+  commitKeyframeAtTime: (time: number, sourceRect: SourceRect) => void;
 
   // Selection
   getSelectedKeyframe: () => Keyframe | null;
@@ -170,6 +171,59 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
     return state.tracks.find((t) => t.id === state.activeTrackId)?.keyframes ?? [];
   },
 
+  commitKeyframeAtTime: (time, sourceRect) =>
+    set((state) => {
+      const { videoMetadata } = state;
+      const epsilon = keyframeTimeEpsilon(videoMetadata?.fps);
+
+      return {
+        tracks: state.tracks.map((track) => {
+          if (track.id !== state.activeTrackId) return track;
+
+          // Check for existing keyframe within epsilon
+          const existing = track.keyframes.find((kf) => Math.abs(kf.time - time) <= epsilon);
+          if (existing) {
+            // Update in place — do not change time or transitionToNext
+            return {
+              ...track,
+              keyframes: track.keyframes.map((kf) =>
+                kf.id === existing.id ? { ...kf, sourceRect } : kf,
+              ),
+            };
+          }
+
+          // Append a new keyframe
+          const newId = `kf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+          const currentLast =
+            track.keyframes.length > 0
+              ? track.keyframes[track.keyframes.length - 1]
+              : null;
+          const newIsLast = currentLast === null || time > currentLast.time;
+
+          const newKf: Keyframe = {
+            id: newId,
+            trackId: track.id,
+            time,
+            sourceRect,
+            transitionToNext: newIsLast ? null : 'smooth',
+          };
+
+          let updatedKeyframes = [...track.keyframes];
+          if (newIsLast && currentLast !== null && currentLast.transitionToNext === null) {
+            // The previously-last keyframe must now have a transition
+            updatedKeyframes = updatedKeyframes.map((kf) =>
+              kf.id === currentLast.id ? { ...kf, transitionToNext: 'smooth' as const } : kf,
+            );
+          }
+
+          return {
+            ...track,
+            keyframes: sortByTime([...updatedKeyframes, newKf]),
+          };
+        }),
+      };
+    }),
+
   getSelectedKeyframe: () => {
     const state = get();
     const keyframes = state.tracks.find((t) => t.id === state.activeTrackId)?.keyframes ?? [];
@@ -218,9 +272,11 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
 
   // ── Recording ──────────────────────────────────────────────────────
   startRecording: () => {
-    const { recordingState, viewportRect } = get();
+    const { recordingState, viewportRect, currentTime } = get();
     if (recordingState !== 'idle' || viewportRect === null) return;
     set({ recordingState: 'recording' });
+    // Snapshot the current position immediately as the first keyframe
+    get().commitKeyframeAtTime(currentTime, viewportRect);
   },
 
   pauseRecording: () => {

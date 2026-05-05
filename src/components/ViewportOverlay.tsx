@@ -107,8 +107,32 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
   );
 
   const handleMouseUp = useCallback(() => {
+    // Stash the interaction before clearing so we can compare rects below
+    const currentInteraction = interaction;
     setInteraction(null);
-  }, []);
+
+    if (currentInteraction === null) return;
+
+    // Gesture-end write: only when recording + paused (not playing)
+    const { recordingState, isPlaying, viewportRect: finalRect, currentTime, commitKeyframeAtTime } =
+      useAppStore.getState();
+
+    if (recordingState !== 'recording' || isPlaying) return;
+    if (finalRect === null) return;
+
+    // No-op if the gesture didn't actually move the rect
+    const { startRect } = currentInteraction;
+    if (
+      finalRect.x === startRect.x &&
+      finalRect.y === startRect.y &&
+      finalRect.width === startRect.width &&
+      finalRect.height === startRect.height
+    ) {
+      return;
+    }
+
+    commitKeyframeAtTime(currentTime, finalRect);
+  }, [interaction]);
 
   // Attach/detach window listeners when interaction starts/ends
   useEffect(() => {
