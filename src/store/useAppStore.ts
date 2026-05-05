@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { VideoMetadata, Track, Keyframe, SourceRect } from '../types';
+import { keyframeTimeEpsilon } from '../config';
 
 const UNSET_RANGE = { inTime: 0, outTime: 0 } as const;
 
@@ -13,7 +14,6 @@ type AppState = {
 
   // UI mode
   mode: 'edit' | 'view';
-  viewType: 'source' | 'preview';
 
   // Playback
   currentTime: number;
@@ -48,7 +48,6 @@ type AppActions = {
 
   // Mode & view
   setMode: (mode: 'edit' | 'view') => void;
-  setViewType: (viewType: 'source' | 'preview') => void;
 
   // Playback
   setCurrentTime: (time: number) => void;
@@ -68,7 +67,6 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [], range: { inTime: 0, outTime: 0 } }],
   activeTrackId: 'track_default',
   mode: 'edit',
-  viewType: 'source',
   currentTime: 0,
   isPlaying: false,
   viewportRect: null,
@@ -167,7 +165,7 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
     const keyframes = state.tracks.find((t) => t.id === state.activeTrackId)?.keyframes ?? [];
     const { currentTime, videoMetadata } = state;
 
-    const epsilon = videoMetadata != null ? 0.5 / videoMetadata.fps : 0.02;
+    const epsilon = keyframeTimeEpsilon(videoMetadata?.fps);
 
     let best: Keyframe | null = null;
     let bestDist = Infinity;
@@ -200,7 +198,6 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
 
   // ── Mode & view ────────────────────────────────────────────────────
   setMode: (mode) => set({ mode }),
-  setViewType: (viewType) => set({ viewType }),
 
   // ── Playback ───────────────────────────────────────────────────────
   setCurrentTime: (time) => set({ currentTime: time }),

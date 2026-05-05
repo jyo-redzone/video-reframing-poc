@@ -10,11 +10,9 @@ export default function PlayerPanel() {
   const videoRef = useVideoRef();
   const containerRef = useRef<HTMLDivElement>(null);
   const setVideoMetadata = useAppStore((s) => s.setVideoMetadata);
-  const setViewportRect = useAppStore((s) => s.setViewportRect);
   const setIsPlaying = useAppStore((s) => s.setIsPlaying);
   const mode = useAppStore((s) => s.mode);
-  const viewType = useAppStore((s) => s.viewType);
-  const showPreview = mode === 'view' && viewType === 'preview';
+  const showPreview = mode === 'view';
 
   const handleLoadedMetadata = () => {
     const video = videoRef.current;
@@ -30,13 +28,6 @@ export default function PlayerPanel() {
       fps: 29.97,
       duration,
       url: '/assets/default.mp4',
-    });
-
-    setViewportRect({
-      x: 0,
-      y: 0,
-      width: videoWidth,
-      height: videoHeight,
     });
   };
 

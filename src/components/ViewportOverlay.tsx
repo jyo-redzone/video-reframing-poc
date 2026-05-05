@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useAppStore from '../store/useAppStore';
-import { resolve } from '../engine/cre';
 import { sourceToPercent, getVideoRenderArea } from '../utils/coordinates';
 import type { SourceRect } from '../types';
 
@@ -22,31 +21,14 @@ interface ViewportOverlayProps {
 export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) {
   const viewportDivRef = useRef<HTMLDivElement>(null);
   const mode = useAppStore((s) => s.mode);
-  const viewType = useAppStore((s) => s.viewType);
   const viewportRect = useAppStore((s) => s.viewportRect);
   const videoMetadata = useAppStore((s) => s.videoMetadata);
-  const currentTime = useAppStore((s) => s.currentTime);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
-  const keyframes = useAppStore(
-    (s) => s.tracks.find((t) => t.id === s.activeTrackId)?.keyframes ?? [],
-  );
 
   const [interaction, setInteraction] = useState<Interaction | null>(null);
 
   const videoWidth = videoMetadata?.width ?? 0;
   const videoHeight = videoMetadata?.height ?? 0;
-
-  // Determine which rect to display — cheap computation, no memoization needed
-  let displayRect: SourceRect | null;
-  if (mode === 'view' && viewType === 'preview') {
-    displayRect = null;
-  } else if (mode === 'view' && viewType === 'source' && videoMetadata) {
-    const bounds = { width: videoMetadata.width, height: videoMetadata.height };
-    const resolved = resolve(currentTime, keyframes, bounds, videoMetadata.fps);
-    displayRect = resolved.sourceRect;
-  } else {
-    displayRect = viewportRect;
-  }
 
   const isEdit = mode === 'edit';
 
@@ -186,16 +168,16 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
     return () => {
       el.removeEventListener('wheel', handleWheel);
     };
-  }, [isEdit, !!displayRect, !!videoMetadata]);
+  }, [isEdit, !!viewportRect, !!videoMetadata]);
 
   // Early returns after all hooks
-  if (mode === 'view' && viewType === 'preview') return null;
-  if (!displayRect || !videoMetadata) return null;
+  if (mode !== 'edit') return null;
+  if (!viewportRect || !videoMetadata) return null;
 
   const container = containerRef.current;
   if (!container) return null;
   const { width: cW, height: cH } = container.getBoundingClientRect();
-  const pct = sourceToPercent(displayRect, videoWidth, videoHeight, cW, cH);
+  const pct = sourceToPercent(viewportRect, videoWidth, videoHeight, cW, cH);
 
   const handleDragStart = (e: React.MouseEvent) => {
     // Prevent if clicking on a resize handle
@@ -205,7 +187,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
     setInteraction({
       type: 'drag',
       startMouse: { x: e.clientX, y: e.clientY },
-      startRect: { ...displayRect },
+      startRect: { ...viewportRect },
     });
   };
 
@@ -215,7 +197,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
       type: 'resize',
       corner,
       startMouse: { x: e.clientX, y: e.clientY },
-      startRect: { ...displayRect },
+      startRect: { ...viewportRect },
     });
   };
 
@@ -242,7 +224,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
     },
   ];
 
-  const rectLabel = `${Math.round(displayRect.width)}x${Math.round(displayRect.height)}`;
+  const rectLabel = `${Math.round(viewportRect.width)}x${Math.round(viewportRect.height)}`;
 
   return (
     <div

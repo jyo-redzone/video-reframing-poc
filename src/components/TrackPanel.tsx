@@ -11,9 +11,7 @@ function formatMmSs(seconds: number): string {
 
 export default function TrackPanel() {
   const mode = useAppStore((s) => s.mode);
-  const viewType = useAppStore((s) => s.viewType);
   const setMode = useAppStore((s) => s.setMode);
-  const setViewType = useAppStore((s) => s.setViewType);
   const activeTrackRange = useAppStore((s) => {
     const track = s.tracks.find((t) => t.id === s.activeTrackId);
     return track?.range ?? { inTime: 0, outTime: 0 };
@@ -31,33 +29,17 @@ export default function TrackPanel() {
         </select>
       </div>
 
-      {/* Mode & View */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-sm text-text-secondary">Mode</label>
-          <select
-            className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary"
-            value={mode}
-            onChange={(e) => setMode(e.target.value as 'edit' | 'view')}
-          >
-            <option value="edit">Edit</option>
-            <option value="view">View</option>
-          </select>
-        </div>
-
-        {mode === 'view' && (
-          <div className="space-y-1.5">
-            <label className="text-sm text-text-secondary">View</label>
-            <select
-              className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary"
-              value={viewType}
-              onChange={(e) => setViewType(e.target.value as 'source' | 'preview')}
-            >
-              <option value="source">Source</option>
-              <option value="preview">Preview</option>
-            </select>
-          </div>
-        )}
+      {/* Mode */}
+      <div className="space-y-1.5">
+        <label className="text-sm text-text-secondary">Mode</label>
+        <select
+          className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary"
+          value={mode}
+          onChange={(e) => setMode(e.target.value as 'edit' | 'view')}
+        >
+          <option value="edit">Edit</option>
+          <option value="view">View</option>
+        </select>
       </div>
 
       <div className="border-t border-border-subtle" />

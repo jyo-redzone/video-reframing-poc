@@ -2,8 +2,6 @@ import { useState } from 'react';
 import useAppStore from '../store/useAppStore';
 import { useVideoRef } from './VideoRefContext';
 
-const FPS = 29.97;
-const FRAME_DURATION = 1 / FPS;
 const SPEED_OPTIONS = [0.5, 1, 1.5, 2, 4, 8, 16];
 
 export default function PlaybackControls() {
@@ -11,7 +9,12 @@ export default function PlaybackControls() {
   const isPlaying = useAppStore((s) => s.isPlaying);
   const setIsPlaying = useAppStore((s) => s.setIsPlaying);
   const setCurrentTime = useAppStore((s) => s.setCurrentTime);
+  const videoMetadata = useAppStore((s) => s.videoMetadata);
   const [playbackRate, setPlaybackRate] = useState(1);
+
+  const fps = videoMetadata?.fps ?? null;
+  const frameDuration = fps != null ? 1 / fps : null;
+  const frameStepDisabled = frameDuration === null;
 
   const handlePlayPause = () => {
     const video = videoRef.current;
@@ -26,19 +29,21 @@ export default function PlaybackControls() {
   };
 
   const handlePrevFrame = () => {
+    if (frameStepDisabled) return;
     const video = videoRef.current;
     if (!video) return;
     if (isPlaying) { video.pause(); setIsPlaying(false); }
-    const newTime = Math.max(0, video.currentTime - FRAME_DURATION);
+    const newTime = Math.max(0, video.currentTime - frameDuration);
     video.currentTime = newTime;
     setCurrentTime(newTime);
   };
 
   const handleNextFrame = () => {
+    if (frameStepDisabled) return;
     const video = videoRef.current;
     if (!video) return;
     if (isPlaying) { video.pause(); setIsPlaying(false); }
-    const newTime = Math.min(video.duration || Infinity, video.currentTime + FRAME_DURATION);
+    const newTime = Math.min(video.duration || Infinity, video.currentTime + frameDuration);
     video.currentTime = newTime;
     setCurrentTime(newTime);
   };
@@ -52,9 +57,10 @@ export default function PlaybackControls() {
   return (
     <div className="flex items-center justify-center gap-1">
       <button
-        className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10"
+        className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
         title="Prev frame"
         onClick={handlePrevFrame}
+        disabled={frameStepDisabled}
       >
         ⏮
       </button>
@@ -66,9 +72,10 @@ export default function PlaybackControls() {
         {isPlaying ? '⏸' : '▶'}
       </button>
       <button
-        className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10"
+        className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
         title="Next frame"
         onClick={handleNextFrame}
+        disabled={frameStepDisabled}
       >
         ⏭
       </button>

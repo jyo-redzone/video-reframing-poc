@@ -24,9 +24,7 @@ function getDrawnRect(state: DrawState) {
 export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) {
   const mode = useAppStore((s) => s.mode);
   const videoMetadata = useAppStore((s) => s.videoMetadata);
-  const currentTime = useAppStore((s) => s.currentTime);
-  const activeTrackId = useAppStore((s) => s.activeTrackId);
-  const addKeyframe = useAppStore((s) => s.addKeyframe);
+  const viewportRect = useAppStore((s) => s.viewportRect);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
 
   const [drawing, setDrawing] = useState<DrawState | null>(null);
@@ -78,23 +76,10 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
       videoMetadata.height,
     );
 
-    const newId = `kf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-
-    addKeyframe({
-      id: newId,
-      trackId: activeTrackId,
-      time: currentTime,
-      sourceRect,
-      transitionToNext: 'smooth',
-    });
-
     setViewportRect(sourceRect);
   }, [
     containerRef,
     videoMetadata,
-    activeTrackId,
-    currentTime,
-    addKeyframe,
     setViewportRect,
   ]);
 
@@ -113,6 +98,7 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
 
   // Early return after all hooks
   if (mode !== 'edit') return null;
+  if (viewportRect !== null) return null;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
