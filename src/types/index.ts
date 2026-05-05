@@ -24,6 +24,7 @@ export type Track = {
   name: string;
   keyframes: Keyframe[]; // kept sorted by time
   range: ClipRange;
+  isDirty: boolean;
 };
 
 export type Segment = {

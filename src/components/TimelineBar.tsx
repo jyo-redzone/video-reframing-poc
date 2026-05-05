@@ -397,7 +397,7 @@ export default function TimelineBar() {
             <rect
               x={handleInX - 3}
               y={20}
-              width={6}
+              width={3}
               height={30}
               rx={2}
               fill="#E4022C"
@@ -414,7 +414,7 @@ export default function TimelineBar() {
             <rect
               x={handleOutX - 3}
               y={20}
-              width={6}
+              width={3}
               height={30}
               rx={2}
               fill="#E4022C"

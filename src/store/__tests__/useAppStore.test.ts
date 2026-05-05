@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import useAppStore from '../useAppStore';
-import type { Keyframe, VideoMetadata } from '../../types';
+import type { Keyframe, SourceRect, VideoMetadata } from '../../types';
 
 // Helper to build a keyframe with sensible defaults
 function makeKf(overrides: Partial<Keyframe> & { id: string; time: number }): Keyframe {
@@ -28,9 +28,10 @@ function makeMetadata(overrides: Partial<VideoMetadata> = {}): VideoMetadata {
 const DEFAULT_TRACK = {
   id: 'track_default',
   videoId: '',
-  name: 'Ball follow',
+  name: 'clip-1',
   keyframes: [],
   range: { inTime: 0, outTime: 0 },
+  isDirty: false,
 };
 
 describe('useAppStore keyframe actions', () => {
@@ -424,13 +425,13 @@ describe('useAppStore recording state machine', () => {
 
 // ── commitKeyframeAtTime ───────────────────────────────────────────────────────
 
-const RECT_A: ReturnType<typeof VIEWPORT_RECT.valueOf> = { x: 0, y: 0, width: 640, height: 360 };
-const RECT_B = { x: 10, y: 20, width: 320, height: 180 };
+const RECT_A: SourceRect = { x: 0, y: 0, width: 640, height: 360 };
+const RECT_B: SourceRect = { x: 10, y: 20, width: 320, height: 180 };
 
 describe('useAppStore commitKeyframeAtTime', () => {
   beforeEach(() => {
     useAppStore.setState({
-      tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [], range: { inTime: 0, outTime: 0 } }],
+      tracks: [{ id: 'track_default', videoId: '', name: 'clip-1', keyframes: [], range: { inTime: 0, outTime: 0 }, isDirty: false }],
       activeTrackId: 'track_default',
       videoMetadata: makeMetadata({ fps: 30 }),
     });
@@ -515,7 +516,7 @@ describe('useAppStore commitKeyframeAtTime', () => {
 describe('useAppStore startRecording snapshot', () => {
   beforeEach(() => {
     useAppStore.setState({
-      tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [], range: { inTime: 0, outTime: 0 } }],
+      tracks: [{ id: 'track_default', videoId: '', name: 'clip-1', keyframes: [], range: { inTime: 0, outTime: 0 }, isDirty: false }],
       activeTrackId: 'track_default',
       videoMetadata: makeMetadata({ fps: 30 }),
       recordingState: 'idle',
@@ -550,5 +551,322 @@ describe('useAppStore startRecording snapshot', () => {
     expect(kfs).toHaveLength(1);
     expect(kfs[0].id).toBe('pre'); // updated in place
     expect(kfs[0].sourceRect).toEqual(RECT_A); // new rect from viewportRect
+  });
+});
+
+// ── Seeded track ─────────────────────────────────────────────────────────────
+
+describe('useAppStore seeded track', () => {
+  it("seeded track is named 'clip-1' and isDirty is false", () => {
+    // Re-import to get the freshly created store (defaults from module init).
+    // Other tests have mutated state, so we cannot rely on getState() reflecting
+    // the seeded values here. Instead, assert against the default track shape
+    // we expect.
+    useAppStore.setState({
+      tracks: [{ ...DEFAULT_TRACK }],
+      activeTrackId: 'track_default',
+    });
+    const tracks = useAppStore.getState().tracks;
+    expect(tracks).toHaveLength(1);
+    expect(tracks[0].name).toBe('clip-1');
+    expect(tracks[0].isDirty).toBe(false);
+  });
+});
+
+// ── Track CRUD ───────────────────────────────────────────────────────────────
+
+describe('useAppStore track CRUD', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      tracks: [{ ...DEFAULT_TRACK }],
+      activeTrackId: 'track_default',
+      videoMetadata: null,
+      viewportRect: null,
+      currentTime: 0,
+      recordingState: 'idle',
+    });
+  });
+
+  // ── createTrack ────────────────────────────────────────────────────
+
+  it('createTrack appends a new track with name clip-2 when one track is seeded', () => {
+    const id = useAppStore.getState().createTrack();
+    const { tracks, activeTrackId } = useAppStore.getState();
+    expect(tracks).toHaveLength(2);
+    expect(tracks[1].id).toBe(id);
+    expect(tracks[1].name).toBe('clip-2');
+    expect(tracks[1].isDirty).toBe(false);
+    expect(activeTrackId).toBe(id);
+  });
+
+  it('createTrack uses tracks.length + 1 (not max-suffix scan) after delete', () => {
+    // Start: clip-1 seeded. Create clip-2, clip-3.
+    useAppStore.getState().createTrack();
+    const id3 = useAppStore.getState().createTrack();
+    expect(useAppStore.getState().tracks.map((t) => t.name)).toEqual([
+      'clip-1',
+      'clip-2',
+      'clip-3',
+    ]);
+
+    // Delete clip-3 → length is now 2; next create should be clip-3 again
+    // (tracks.length + 1 = 3), not "clip-4" (no max-suffix scan).
+    useAppStore.getState().deleteTrack(id3);
+    expect(useAppStore.getState().tracks).toHaveLength(2);
+
+    useAppStore.getState().createTrack();
+    const tracks = useAppStore.getState().tracks;
+    expect(tracks).toHaveLength(3);
+    expect(tracks[tracks.length - 1].name).toBe('clip-3');
+  });
+
+  it('createTrack sets active to new track and clears viewportRect', () => {
+    useAppStore.setState({ viewportRect: { x: 0, y: 0, width: 10, height: 10 } });
+    const id = useAppStore.getState().createTrack();
+    expect(useAppStore.getState().activeTrackId).toBe(id);
+    expect(useAppStore.getState().viewportRect).toBeNull();
+  });
+
+  it('createTrack uses videoMetadata.duration for the new track range', () => {
+    useAppStore.setState({ videoMetadata: makeMetadata({ duration: 42 }) });
+    const id = useAppStore.getState().createTrack();
+    const newTrack = useAppStore.getState().tracks.find((t) => t.id === id)!;
+    expect(newTrack.range).toEqual({ inTime: 0, outTime: 42 });
+  });
+
+  it('createTrack uses 0 for outTime when videoMetadata is null', () => {
+    const id = useAppStore.getState().createTrack();
+    const newTrack = useAppStore.getState().tracks.find((t) => t.id === id)!;
+    expect(newTrack.range).toEqual({ inTime: 0, outTime: 0 });
+  });
+
+  // ── deleteTrack ────────────────────────────────────────────────────
+
+  it('deleteTrack of active track clears activeTrackId to empty string and viewport', () => {
+    useAppStore.setState({
+      viewportRect: { x: 0, y: 0, width: 10, height: 10 },
+      currentTime: 7.5,
+    });
+    useAppStore.getState().deleteTrack('track_default');
+    const state = useAppStore.getState();
+    expect(state.tracks).toHaveLength(0);
+    expect(state.activeTrackId).toBe('');
+    expect(state.viewportRect).toBeNull();
+    // currentTime preserved
+    expect(state.currentTime).toBe(7.5);
+  });
+
+  it('deleteTrack of non-active track leaves active untouched', () => {
+    const newId = useAppStore.getState().createTrack(); // becomes active
+    // Make track_default the active again so we delete a non-active track
+    useAppStore.setState({ activeTrackId: 'track_default' });
+    const viewport = { x: 1, y: 2, width: 3, height: 4 };
+    useAppStore.setState({ viewportRect: viewport });
+
+    useAppStore.getState().deleteTrack(newId);
+
+    const state = useAppStore.getState();
+    expect(state.tracks).toHaveLength(1);
+    expect(state.tracks[0].id).toBe('track_default');
+    expect(state.activeTrackId).toBe('track_default');
+    expect(state.viewportRect).toEqual(viewport);
+  });
+
+  // ── renameTrack ────────────────────────────────────────────────────
+
+  it('renameTrack with empty string is a no-op', () => {
+    useAppStore.getState().renameTrack('track_default', '');
+    const t = useAppStore.getState().tracks[0];
+    expect(t.name).toBe('clip-1');
+    expect(t.isDirty).toBe(false);
+  });
+
+  it('renameTrack with whitespace-only string is a no-op', () => {
+    useAppStore.getState().renameTrack('track_default', '   ');
+    const t = useAppStore.getState().tracks[0];
+    expect(t.name).toBe('clip-1');
+    expect(t.isDirty).toBe(false);
+  });
+
+  it('renameTrack trims and updates the name', () => {
+    useAppStore.getState().renameTrack('track_default', '  My clip  ');
+    expect(useAppStore.getState().tracks[0].name).toBe('My clip');
+  });
+
+  it('renameTrack of active track marks dirty', () => {
+    useAppStore.getState().renameTrack('track_default', 'New name');
+    expect(useAppStore.getState().tracks[0].isDirty).toBe(true);
+  });
+
+  it('renameTrack of non-active track does NOT mark dirty', () => {
+    const newId = useAppStore.getState().createTrack(); // new track is now active
+    // Rename the seeded (non-active) track.
+    useAppStore.getState().renameTrack('track_default', 'Renamed');
+    const seeded = useAppStore.getState().tracks.find((t) => t.id === 'track_default')!;
+    const newTrack = useAppStore.getState().tracks.find((t) => t.id === newId)!;
+    expect(seeded.name).toBe('Renamed');
+    expect(seeded.isDirty).toBe(false);
+    expect(newTrack.isDirty).toBe(false);
+  });
+
+  // ── setActiveTrackId ───────────────────────────────────────────────
+
+  it('setActiveTrackId switches active track and clears viewport', () => {
+    const newId = useAppStore.getState().createTrack();
+    useAppStore.setState({ viewportRect: { x: 1, y: 2, width: 3, height: 4 } });
+    useAppStore.getState().setActiveTrackId('track_default');
+    expect(useAppStore.getState().activeTrackId).toBe('track_default');
+    expect(useAppStore.getState().viewportRect).toBeNull();
+    // newId still exists in tracks
+    expect(useAppStore.getState().tracks.some((t) => t.id === newId)).toBe(true);
+  });
+
+  it('setActiveTrackId is blocked while recording (alert + no state change)', () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const newId = useAppStore.getState().createTrack();
+    // Now active is newId. Move back to track_default for the test.
+    useAppStore.setState({ activeTrackId: 'track_default', recordingState: 'recording' });
+
+    useAppStore.getState().setActiveTrackId(newId);
+
+    expect(useAppStore.getState().activeTrackId).toBe('track_default');
+    expect(alertSpy).toHaveBeenCalledWith('Stop recording before switching clips');
+    alertSpy.mockRestore();
+  });
+
+  it('setActiveTrackId is blocked while paused (alert + no state change)', () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const newId = useAppStore.getState().createTrack();
+    useAppStore.setState({ activeTrackId: 'track_default', recordingState: 'paused' });
+
+    useAppStore.getState().setActiveTrackId(newId);
+
+    expect(useAppStore.getState().activeTrackId).toBe('track_default');
+    expect(alertSpy).toHaveBeenCalledWith('Stop recording before switching clips');
+    alertSpy.mockRestore();
+  });
+
+  // ── markActiveTrackSaved ───────────────────────────────────────────
+
+  it('markActiveTrackSaved clears dirty on the active track only', () => {
+    // Set up two tracks: active is track_default with isDirty=true, other isDirty=true
+    const newId = useAppStore.getState().createTrack(); // newId becomes active
+    // Mark both dirty manually
+    useAppStore.setState((state) => ({
+      tracks: state.tracks.map((t) => ({ ...t, isDirty: true })),
+    }));
+    // Active is newId
+    useAppStore.getState().markActiveTrackSaved();
+
+    const tracks = useAppStore.getState().tracks;
+    const activeTrack = tracks.find((t) => t.id === newId)!;
+    const otherTrack = tracks.find((t) => t.id === 'track_default')!;
+    expect(activeTrack.isDirty).toBe(false);
+    expect(otherTrack.isDirty).toBe(true);
+  });
+
+  it('markActiveTrackSaved is a no-op when activeTrackId is empty (no active track)', () => {
+    // Mark default dirty, then delete it (which clears activeTrackId)
+    useAppStore.setState((state) => ({
+      tracks: state.tracks.map((t) => ({ ...t, isDirty: true })),
+    }));
+    useAppStore.getState().deleteTrack('track_default');
+    expect(useAppStore.getState().activeTrackId).toBe('');
+    // Should not throw.
+    expect(() => useAppStore.getState().markActiveTrackSaved()).not.toThrow();
+  });
+});
+
+// ── Dirty flag flips on mutations ────────────────────────────────────────────
+
+describe('useAppStore dirty flag on mutations', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      tracks: [{ ...DEFAULT_TRACK }],
+      activeTrackId: 'track_default',
+      videoMetadata: makeMetadata({ fps: 30, duration: 60 }),
+      viewportRect: null,
+      currentTime: 0,
+      recordingState: 'idle',
+    });
+  });
+
+  function activeTrack() {
+    const s = useAppStore.getState();
+    return s.tracks.find((t) => t.id === s.activeTrackId)!;
+  }
+
+  it('setVideoMetadata auto-range fill does NOT mark seeded track dirty', () => {
+    // Reset to a fresh state where range is unset and isDirty is false.
+    useAppStore.setState({
+      tracks: [{ ...DEFAULT_TRACK }],
+      activeTrackId: 'track_default',
+      videoMetadata: null,
+    });
+    useAppStore.getState().setVideoMetadata(makeMetadata({ duration: 60 }));
+    const t = useAppStore.getState().tracks[0];
+    expect(t.range).toEqual({ inTime: 0, outTime: 60 });
+    expect(t.isDirty).toBe(false);
+  });
+
+  it('setTrackRange marks active track dirty', () => {
+    expect(activeTrack().isDirty).toBe(false);
+    useAppStore.getState().setTrackRange(5, 30);
+    expect(activeTrack().isDirty).toBe(true);
+  });
+
+  it('addKeyframe marks active track dirty', () => {
+    expect(activeTrack().isDirty).toBe(false);
+    useAppStore.getState().addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+    expect(activeTrack().isDirty).toBe(true);
+  });
+
+  it('updateKeyframe marks active track dirty', () => {
+    useAppStore.getState().addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+    useAppStore.getState().markActiveTrackSaved();
+    expect(activeTrack().isDirty).toBe(false);
+    useAppStore.getState().updateKeyframe('kf1', { time: 2 });
+    expect(activeTrack().isDirty).toBe(true);
+  });
+
+  it('deleteKeyframe marks active track dirty', () => {
+    useAppStore.getState().addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+    useAppStore.getState().markActiveTrackSaved();
+    expect(activeTrack().isDirty).toBe(false);
+    useAppStore.getState().deleteKeyframe('kf1');
+    expect(activeTrack().isDirty).toBe(true);
+  });
+
+  it('commitKeyframeAtTime (append path) marks active track dirty', () => {
+    expect(activeTrack().isDirty).toBe(false);
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    expect(activeTrack().isDirty).toBe(true);
+  });
+
+  it('commitKeyframeAtTime (update-existing path) marks active track dirty', () => {
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    useAppStore.getState().markActiveTrackSaved();
+    expect(activeTrack().isDirty).toBe(false);
+    // Within epsilon of existing
+    const epsilon = 0.5 / 30;
+    useAppStore.getState().commitKeyframeAtTime(1.0 + epsilon * 0.5, RECT_B);
+    expect(activeTrack().isDirty).toBe(true);
+  });
+
+  it('setTransition marks active track dirty', () => {
+    useAppStore.getState().commitKeyframeAtTime(1.0, RECT_A);
+    useAppStore.getState().commitKeyframeAtTime(3.0, RECT_B);
+    useAppStore.getState().markActiveTrackSaved();
+    expect(activeTrack().isDirty).toBe(false);
+    const firstKfId = activeTrack().keyframes[0].id;
+    useAppStore.getState().setTransition(firstKfId, 'cut');
+    expect(activeTrack().isDirty).toBe(true);
+  });
+
+  it('markActiveTrackSaved flips dirty back to false after a mutation', () => {
+    useAppStore.getState().setTrackRange(5, 30);
+    expect(activeTrack().isDirty).toBe(true);
+    useAppStore.getState().markActiveTrackSaved();
+    expect(activeTrack().isDirty).toBe(false);
   });
 });

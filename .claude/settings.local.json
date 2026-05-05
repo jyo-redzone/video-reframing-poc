@@ -8,7 +8,11 @@
       "Bash(npx vitest *)",
       "Bash(npx tsc *)",
       "Skill(code-reviewer)",
-      "Skill(code-reviewer:*)"
+      "Skill(code-reviewer:*)",
+      "Bash(mkdir -p docs/coding-team/clip-crud)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\jyots\\source\\work\\VideoReframingPoc\\docs\\coding-team"
     ]
   }
 }

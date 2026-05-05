@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Reviews code for best practices and potential issues.
 context: fork
-model: claude-opus-4-7
+model: claude-opus-4-6
 effort: high
 allowed-tools:
   - Read

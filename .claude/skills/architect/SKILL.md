@@ -1,7 +1,7 @@
 ---
 name: architect
 description: Architects whole implementations.
-model: claude-opus-4-7
+model: claude-opus-4-6
 effort: high
 allowed-tools:
   - Read
