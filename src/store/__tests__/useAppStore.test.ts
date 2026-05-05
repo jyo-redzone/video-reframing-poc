@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import useAppStore from '../useAppStore';
 import type { Keyframe, VideoMetadata } from '../../types';
 
@@ -317,5 +317,107 @@ describe('useAppStore clip range', () => {
     expect(track.range.inTime).toBeLessThanOrEqual(track.range.outTime);
     expect(track.range.inTime).toBe(10);
     expect(track.range.outTime).toBe(40);
+  });
+});
+
+const VIEWPORT_RECT = { x: 0, y: 0, width: 640, height: 360 };
+
+describe('useAppStore recording state machine', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      recordingState: 'idle',
+      viewportRect: null,
+      mode: 'edit',
+    });
+  });
+
+  it('initial recordingState is idle', () => {
+    expect(useAppStore.getState().recordingState).toBe('idle');
+  });
+
+  it('startRecording transitions idle→recording when viewportRect is set', () => {
+    useAppStore.setState({ viewportRect: VIEWPORT_RECT });
+    useAppStore.getState().startRecording();
+    expect(useAppStore.getState().recordingState).toBe('recording');
+  });
+
+  it('startRecording is a no-op when viewportRect is null', () => {
+    useAppStore.getState().startRecording();
+    expect(useAppStore.getState().recordingState).toBe('idle');
+  });
+
+  it('startRecording is a no-op when already recording', () => {
+    useAppStore.setState({ viewportRect: VIEWPORT_RECT, recordingState: 'recording' });
+    useAppStore.getState().startRecording();
+    expect(useAppStore.getState().recordingState).toBe('recording');
+  });
+
+  it('pauseRecording transitions recording→paused', () => {
+    useAppStore.setState({ recordingState: 'recording' });
+    useAppStore.getState().pauseRecording();
+    expect(useAppStore.getState().recordingState).toBe('paused');
+  });
+
+  it('pauseRecording is a no-op when idle', () => {
+    useAppStore.getState().pauseRecording();
+    expect(useAppStore.getState().recordingState).toBe('idle');
+  });
+
+  it('pauseRecording is a no-op when already paused', () => {
+    useAppStore.setState({ recordingState: 'paused' });
+    useAppStore.getState().pauseRecording();
+    expect(useAppStore.getState().recordingState).toBe('paused');
+  });
+
+  it('resumeRecording transitions paused→recording', () => {
+    useAppStore.setState({ recordingState: 'paused' });
+    useAppStore.getState().resumeRecording();
+    expect(useAppStore.getState().recordingState).toBe('recording');
+  });
+
+  it('resumeRecording is a no-op when idle', () => {
+    useAppStore.getState().resumeRecording();
+    expect(useAppStore.getState().recordingState).toBe('idle');
+  });
+
+  it('stopRecording transitions recording→idle', () => {
+    useAppStore.setState({ recordingState: 'recording' });
+    useAppStore.getState().stopRecording();
+    expect(useAppStore.getState().recordingState).toBe('idle');
+  });
+
+  it('stopRecording transitions paused→idle', () => {
+    useAppStore.setState({ recordingState: 'paused' });
+    useAppStore.getState().stopRecording();
+    expect(useAppStore.getState().recordingState).toBe('idle');
+  });
+
+  it('stopRecording is a no-op when already idle', () => {
+    useAppStore.getState().stopRecording();
+    expect(useAppStore.getState().recordingState).toBe('idle');
+  });
+
+  it('setMode blocks mode switch and calls alert when recording', () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    useAppStore.setState({ mode: 'edit', recordingState: 'recording' });
+    useAppStore.getState().setMode('view');
+    expect(useAppStore.getState().mode).toBe('edit');
+    expect(alertSpy).toHaveBeenCalledWith('Stop recording before switching modes');
+    alertSpy.mockRestore();
+  });
+
+  it('setMode blocks mode switch and calls alert when paused', () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    useAppStore.setState({ mode: 'edit', recordingState: 'paused' });
+    useAppStore.getState().setMode('view');
+    expect(useAppStore.getState().mode).toBe('edit');
+    expect(alertSpy).toHaveBeenCalledWith('Stop recording before switching modes');
+    alertSpy.mockRestore();
+  });
+
+  it('setMode works normally when idle', () => {
+    useAppStore.setState({ mode: 'edit', recordingState: 'idle' });
+    useAppStore.getState().setMode('view');
+    expect(useAppStore.getState().mode).toBe('view');
   });
 });

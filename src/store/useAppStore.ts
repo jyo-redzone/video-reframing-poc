@@ -15,6 +15,9 @@ type AppState = {
   // UI mode
   mode: 'edit' | 'view';
 
+  // Recording
+  recordingState: 'idle' | 'recording' | 'paused';
+
   // Playback
   currentTime: number;
   isPlaying: boolean;
@@ -49,6 +52,12 @@ type AppActions = {
   // Mode & view
   setMode: (mode: 'edit' | 'view') => void;
 
+  // Recording
+  startRecording: () => void;
+  pauseRecording: () => void;
+  resumeRecording: () => void;
+  stopRecording: () => void;
+
   // Playback
   setCurrentTime: (time: number) => void;
   setIsPlaying: (playing: boolean) => void;
@@ -67,6 +76,7 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   tracks: [{ id: 'track_default', videoId: '', name: 'Ball follow', keyframes: [], range: { inTime: 0, outTime: 0 } }],
   activeTrackId: 'track_default',
   mode: 'edit',
+  recordingState: 'idle',
   currentTime: 0,
   isPlaying: false,
   viewportRect: null,
@@ -197,7 +207,39 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
     })),
 
   // ── Mode & view ────────────────────────────────────────────────────
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) => {
+    const { recordingState } = get();
+    if (recordingState !== 'idle') {
+      window.alert('Stop recording before switching modes');
+      return;
+    }
+    set({ mode });
+  },
+
+  // ── Recording ──────────────────────────────────────────────────────
+  startRecording: () => {
+    const { recordingState, viewportRect } = get();
+    if (recordingState !== 'idle' || viewportRect === null) return;
+    set({ recordingState: 'recording' });
+  },
+
+  pauseRecording: () => {
+    const { recordingState } = get();
+    if (recordingState !== 'recording') return;
+    set({ recordingState: 'paused' });
+  },
+
+  resumeRecording: () => {
+    const { recordingState } = get();
+    if (recordingState !== 'paused') return;
+    set({ recordingState: 'recording' });
+  },
+
+  stopRecording: () => {
+    const { recordingState } = get();
+    if (recordingState !== 'recording' && recordingState !== 'paused') return;
+    set({ recordingState: 'idle' });
+  },
 
   // ── Playback ───────────────────────────────────────────────────────
   setCurrentTime: (time) => set({ currentTime: time }),
