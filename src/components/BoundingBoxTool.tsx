@@ -42,10 +42,18 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
       if (!containerRef.current) return;
 
       const containerBounds = containerRef.current.getBoundingClientRect();
-      const x = Math.max(0, Math.min(e.clientX - containerBounds.left, containerBounds.width));
-      const y = Math.max(0, Math.min(e.clientY - containerBounds.top, containerBounds.height));
+      const clampedX = Math.max(0, Math.min(e.clientX - containerBounds.left, containerBounds.width));
+      const clampedY = Math.max(0, Math.min(e.clientY - containerBounds.top, containerBounds.height));
 
-      setDrawing((prev) => (prev ? { ...prev, currentX: x, currentY: y } : null));
+      let cx = clampedX;
+      let cy = clampedY;
+      if (e.shiftKey && drawingRef.current) {
+        const dx = cx - drawingRef.current.startX;
+        const dy = cy - drawingRef.current.startY;
+        if (Math.abs(dx) > Math.abs(dy)) cy = drawingRef.current.startY;
+        else cx = drawingRef.current.startX;
+      }
+      setDrawing((prev) => (prev ? { ...prev, currentX: cx, currentY: cy } : null));
     },
     [containerRef],
   );

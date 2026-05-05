@@ -74,8 +74,12 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
         containerW, containerH, videoWidth, videoHeight,
       );
 
-      const dx = e.clientX - interaction.startMouse.x;
-      const dy = e.clientY - interaction.startMouse.y;
+      let dx = e.clientX - interaction.startMouse.x;
+      let dy = e.clientY - interaction.startMouse.y;
+      if (e.shiftKey) {
+        if (Math.abs(dx) > Math.abs(dy)) dy = 0;
+        else dx = 0;
+      }
 
       // Convert pixel deltas to source coords using render dimensions (not container)
       const dxSource = (dx / renderWidth) * videoWidth;
