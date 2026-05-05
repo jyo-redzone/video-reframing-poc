@@ -26,6 +26,7 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
   const videoMetadata = useAppStore((s) => s.videoMetadata);
   const viewportRect = useAppStore((s) => s.viewportRect);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
+  const activeTrackId = useAppStore((s) => s.activeTrackId);
 
   const [drawing, setDrawing] = useState<DrawState | null>(null);
   const drawingRef = useRef<DrawState | null>(null);
@@ -97,6 +98,7 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
   }, [drawing, handleMouseMove, handleMouseUp]);
 
   // Early return after all hooks
+  if (activeTrackId === '') return null;
   if (mode !== 'edit') return null;
   if (viewportRect !== null) return null;
 

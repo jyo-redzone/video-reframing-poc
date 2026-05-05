@@ -13,6 +13,7 @@ export default function PlaybackControls() {
   const mode = useAppStore((s) => s.mode);
   const recordingState = useAppStore((s) => s.recordingState);
   const viewportRect = useAppStore((s) => s.viewportRect);
+  const activeTrackId = useAppStore((s) => s.activeTrackId);
   const startRecording = useAppStore((s) => s.startRecording);
   const pauseRecording = useAppStore((s) => s.pauseRecording);
   const resumeRecording = useAppStore((s) => s.resumeRecording);
@@ -108,16 +109,26 @@ export default function PlaybackControls() {
           {/* Vertical divider */}
           <div className="mx-2 h-5 w-px bg-white/20" aria-hidden="true" />
 
-          {recordingState === 'idle' && (
-            <button
-              className={recButtonClass}
-              title={viewportRect === null ? 'Draw a framing box first.' : 'Start recording'}
-              onClick={startRecording}
-              disabled={viewportRect === null}
-            >
-              ⏺ Record
-            </button>
-          )}
+          {recordingState === 'idle' && (() => {
+            const noTrack = activeTrackId === '';
+            const noBox = viewportRect === null;
+            const recordDisabled = noTrack || noBox;
+            const recordTitle = noTrack
+              ? 'Select or create a clip first.'
+              : noBox
+                ? 'Draw a framing box first.'
+                : 'Start recording';
+            return (
+              <button
+                className={recButtonClass}
+                title={recordTitle}
+                onClick={startRecording}
+                disabled={recordDisabled}
+              >
+                ⏺ Record
+              </button>
+            );
+          })()}
 
           {recordingState !== 'idle' && (
             <div className="flex items-center gap-1">

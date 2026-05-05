@@ -24,6 +24,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
   const viewportRect = useAppStore((s) => s.viewportRect);
   const videoMetadata = useAppStore((s) => s.videoMetadata);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
+  const activeTrackId = useAppStore((s) => s.activeTrackId);
 
   const [interaction, setInteraction] = useState<Interaction | null>(null);
 
@@ -195,6 +196,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
   }, [isEdit, !!viewportRect, !!videoMetadata]);
 
   // Early returns after all hooks
+  if (activeTrackId === '') return null;
   if (mode !== 'edit') return null;
   if (!viewportRect || !videoMetadata) return null;
 
