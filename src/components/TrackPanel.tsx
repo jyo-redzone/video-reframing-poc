@@ -67,13 +67,7 @@ export default function TrackPanel() {
       </div>
 
       {/* Auto KF + Add Manual KF */}
-      {/* <div className="grid grid-cols-2 items-end gap-3"> */}
-        <button
-          className="w-full rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/90"
-          onClick={handleAddManualKF}
-        >
-          <span>Add Manual Keyframe</span>
-        </button>
+      <div className="grid grid-cols-2 items-end gap-3">
         <div className="space-y-1.5">
           <label className="text-sm text-text-secondary">Keyframe capture</label>
           <label className="flex items-center gap-2 text-sm text-text-primary">
@@ -92,7 +86,13 @@ export default function TrackPanel() {
             </span>
           </label>
         </div>
-      {/* </div> */}
+        <button
+          className="w-full rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/90"
+          onClick={handleAddManualKF}
+        >
+          + Manual KF
+        </button>
+      </div>
 
       <div className="border-t border-border-subtle" />
 
