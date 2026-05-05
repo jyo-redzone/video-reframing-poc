@@ -127,42 +127,6 @@ export function resolve(
 }
 
 /**
- * Derive a human-readable intent string describing the motion between two rects.
- *
- * - Pan:  |dx| > 5px  -> "Pan left" or "Pan right"
- * - Tilt: |dy| > 5px  -> "Tilt up" or "Tilt down"
- * - Zoom: width ratio outside +-5% -> "Zoom in {ratio}x" or "Zoom out {ratio}x"
- * - Combined with " + ". If no motion -> "Hold"
- */
-export function deriveIntent(start: SourceRect, end: SourceRect): string {
-  const parts: string[] = [];
-
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-
-  if (Math.abs(dx) > 5) {
-    parts.push(dx > 0 ? 'Pan right' : 'Pan left');
-  }
-
-  if (Math.abs(dy) > 5) {
-    parts.push(dy > 0 ? 'Tilt down' : 'Tilt up');
-  }
-
-  const widthRatio = start.width / end.width;
-  if (Math.abs(widthRatio - 1) > 0.05) {
-    const rounded = Math.round(widthRatio * 10) / 10;
-    if (widthRatio > 1) {
-      parts.push(`Zoom in ${rounded}x`);
-    } else {
-      const inverseRounded = Math.round((1 / widthRatio) * 10) / 10;
-      parts.push(`Zoom out ${inverseRounded}x`);
-    }
-  }
-
-  return parts.length > 0 ? parts.join(' + ') : 'Hold';
-}
-
-/**
  * Derive segments from consecutive keyframe pairs.
  *
  * Each segment spans [kf_i, kf_{i+1}] and carries the transition type
@@ -182,7 +146,6 @@ export function deriveSegments(keyframes: Keyframe[]): Segment[] {
       startTime: start.time,
       endTime: end.time,
       transition,
-      derivedIntent: deriveIntent(start.sourceRect, end.sourceRect),
     });
   }
 

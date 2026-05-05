@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { snapToFrame, resolve, deriveIntent, deriveSegments } from '../cre.ts';
+import { snapToFrame, resolve, deriveSegments } from '../cre.ts';
 import type { Keyframe, VideoBounds, SourceRect } from '../../types/index.ts';
 
 // ---------------------------------------------------------------------------
@@ -202,55 +202,6 @@ describe('resolve — edge cases', () => {
 });
 
 // ---------------------------------------------------------------------------
-// deriveIntent
-// ---------------------------------------------------------------------------
-
-describe('deriveIntent', () => {
-  const base: SourceRect = { x: 100, y: 100, width: 1920, height: 1080 };
-
-  it('returns "Hold" when nothing changes', () => {
-    expect(deriveIntent(base, base)).toBe('Hold');
-  });
-
-  it('detects Pan right', () => {
-    expect(deriveIntent(base, { ...base, x: 110 })).toBe('Pan right');
-  });
-
-  it('detects Pan left', () => {
-    expect(deriveIntent(base, { ...base, x: 90 })).toBe('Pan left');
-  });
-
-  it('detects Tilt down', () => {
-    expect(deriveIntent(base, { ...base, y: 110 })).toBe('Tilt down');
-  });
-
-  it('detects Tilt up', () => {
-    expect(deriveIntent(base, { ...base, y: 90 })).toBe('Tilt up');
-  });
-
-  it('detects Zoom in (smaller end width)', () => {
-    const result = deriveIntent(base, { ...base, width: 960 });
-    expect(result).toBe('Zoom in 2x');
-  });
-
-  it('detects Zoom out (larger end width)', () => {
-    const result = deriveIntent(base, { ...base, width: 3840 });
-    expect(result).toBe('Zoom out 2x');
-  });
-
-  it('combines pan + tilt + zoom', () => {
-    const end: SourceRect = { x: 200, y: 200, width: 960, height: 540 };
-    const result = deriveIntent(base, end);
-    expect(result).toBe('Pan right + Tilt down + Zoom in 2x');
-  });
-
-  it('ignores motion within 5px threshold', () => {
-    const slight: SourceRect = { x: 104, y: 95, width: 1920, height: 1080 };
-    expect(deriveIntent(base, slight)).toBe('Hold');
-  });
-});
-
-// ---------------------------------------------------------------------------
 // deriveSegments
 // ---------------------------------------------------------------------------
 
@@ -267,12 +218,10 @@ describe('deriveSegments', () => {
     expect(segments[0].startTime).toBe(0);
     expect(segments[0].endTime).toBe(5);
     expect(segments[0].transition).toBe('smooth');
-    expect(segments[0].derivedIntent).toBe('Pan right');
 
     expect(segments[1].startTime).toBe(5);
     expect(segments[1].endTime).toBe(10);
     expect(segments[1].transition).toBe('cut');
-    expect(segments[1].derivedIntent).toBe('Pan right + Zoom in 2x');
   });
 
   it('returns empty array for single keyframe', () => {

@@ -32,7 +32,6 @@ export type Segment = {
   startTime: number;
   endTime: number;
   transition: 'smooth' | 'cut';
-  derivedIntent: string;
 };
 
 export type VideoMetadata = {

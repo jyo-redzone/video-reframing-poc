@@ -28,7 +28,6 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
   const activeTrackId = useAppStore((s) => s.activeTrackId);
   const addKeyframe = useAppStore((s) => s.addKeyframe);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
-  const selectKeyframe = useAppStore((s) => s.selectKeyframe);
 
   const [drawing, setDrawing] = useState<DrawState | null>(null);
   const drawingRef = useRef<DrawState | null>(null);
@@ -82,7 +81,6 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
     });
 
     setViewportRect(sourceRect);
-    selectKeyframe(newId);
   }, [
     containerRef,
     videoMetadata,
@@ -90,7 +88,6 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
     currentTime,
     addKeyframe,
     setViewportRect,
-    selectKeyframe,
   ]);
 
   // Attach window listeners when drawing

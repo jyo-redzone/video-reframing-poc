@@ -22,9 +22,6 @@ type AppState = {
   // Viewport
   viewportRect: SourceRect | null;
 
-  // Dialog state
-  selectedKeyframeId: string | null;
-  selectedSegmentKey: string | null;
 };
 
 type AppActions = {
@@ -57,9 +54,6 @@ type AppActions = {
   // Viewport
   setViewportRect: (rect: SourceRect | null) => void;
 
-  // Dialog
-  selectKeyframe: (id: string | null) => void;
-  selectSegment: (key: string | null) => void;
 };
 
 const sortByTime = (keyframes: Keyframe[]): Keyframe[] =>
@@ -75,8 +69,6 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   currentTime: 0,
   isPlaying: false,
   viewportRect: null,
-  selectedKeyframeId: null,
-  selectedSegmentKey: null,
 
   // ── Video ──────────────────────────────────────────────────────────
   setVideoMetadata: (meta) =>
@@ -193,9 +185,6 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   // ── Viewport ───────────────────────────────────────────────────────
   setViewportRect: (rect) => set({ viewportRect: rect }),
 
-  // ── Dialog ─────────────────────────────────────────────────────────
-  selectKeyframe: (id) => set({ selectedKeyframeId: id }),
-  selectSegment: (key) => set({ selectedSegmentKey: key }),
 }));
 
 export default useAppStore;

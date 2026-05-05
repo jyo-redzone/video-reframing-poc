@@ -14,29 +14,10 @@ export default function TrackPanel() {
   const viewType = useAppStore((s) => s.viewType);
   const setMode = useAppStore((s) => s.setMode);
   const setViewType = useAppStore((s) => s.setViewType);
-  const currentTime = useAppStore((s) => s.currentTime);
-  const viewportRect = useAppStore((s) => s.viewportRect);
-  const activeTrackId = useAppStore((s) => s.activeTrackId);
-  const addKeyframe = useAppStore((s) => s.addKeyframe);
-  const selectKeyframe = useAppStore((s) => s.selectKeyframe);
   const activeTrackRange = useAppStore((s) => {
     const track = s.tracks.find((t) => t.id === s.activeTrackId);
     return track?.range ?? { inTime: 0, outTime: 0 };
   });
-
-  const handleAddManualKF = () => {
-    if (!viewportRect) return;
-
-    const newId = `kf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    addKeyframe({
-      id: newId,
-      trackId: activeTrackId,
-      time: currentTime,
-      sourceRect: { ...viewportRect },
-      transitionToNext: 'smooth',
-    });
-    selectKeyframe(newId);
-  };
 
   return (
     <div className="space-y-4 px-4 py-3">
@@ -79,34 +60,6 @@ export default function TrackPanel() {
         )}
       </div>
 
-      {/* Auto KF + Add Manual KF */}
-      <div className="grid grid-cols-2 items-end gap-3">
-        <div className="space-y-1.5">
-          <label className="text-sm text-text-secondary">Keyframe capture</label>
-          <label className="flex items-center gap-2 text-sm text-text-primary">
-            <input type="checkbox" className="h-4 w-4" defaultChecked />
-            Auto
-            <span className="group relative ml-auto cursor-help text-text-disabled">
-              &#x1F6C8;
-              <span className="pointer-events-none absolute right-0 top-6 z-50 hidden w-64 rounded-default border border-border-subtle bg-surface p-3 text-xs text-text-primary shadow-elevation-8 group-hover:block">
-                <div className="mb-1 font-semibold">Auto keyframe capture</div>
-                <div className="mb-1">Key frames are automatically captured at</div>
-                <ol className="list-decimal space-y-1 pl-4">
-                  <li>Start and end of PTZ gesture</li>
-                  <li>BBox create</li>
-                </ol>
-              </span>
-            </span>
-          </label>
-        </div>
-        <button
-          className="w-full rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/90"
-          onClick={handleAddManualKF}
-        >
-          + Manual KF
-        </button>
-      </div>
-
       <div className="border-t border-border-subtle" />
 
       {/* Clip range — read-only display */}
@@ -126,7 +79,7 @@ export default function TrackPanel() {
           className="w-full rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/90"
           onClick={() => window.alert('Export not available in POC')}
         >
-          Export
+          Export selected clip
         </button>
       </div>
     </div>

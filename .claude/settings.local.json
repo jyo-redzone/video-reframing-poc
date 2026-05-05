@@ -6,7 +6,9 @@
       "Skill(developer)",
       "Skill(developer:*)",
       "Bash(npx vitest *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Skill(code-reviewer)",
+      "Skill(code-reviewer:*)"
     ]
   }
 }

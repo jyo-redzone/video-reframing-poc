@@ -44,8 +44,6 @@ export default function TimelineBar() {
   const duration = useAppStore((s) => s.videoMetadata?.duration) ?? 60;
   const setCurrentTime = useAppStore((s) => s.setCurrentTime);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
-  const selectKeyframe = useAppStore((s) => s.selectKeyframe);
-  const selectSegment = useAppStore((s) => s.selectSegment);
 
   const [zoomLevel, setZoomLevel] = useState(1);
   const [zoomOffset, setZoomOffset] = useState(0);
@@ -199,7 +197,6 @@ export default function TimelineBar() {
                 cursor="pointer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  selectSegment(segKey);
                   const midTime = (seg.startTime + seg.endTime) / 2;
                   setCurrentTime(midTime);
                   if (videoRef.current) videoRef.current.currentTime = midTime;
@@ -224,7 +221,6 @@ export default function TimelineBar() {
               cursor="pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                selectKeyframe(kf.id);
                 setCurrentTime(kf.time);
                 if (videoRef.current) videoRef.current.currentTime = kf.time;
                 setViewportRect(kf.sourceRect);
