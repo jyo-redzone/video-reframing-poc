@@ -249,8 +249,9 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
     })),
 
   deleteKeyframe: (id) =>
-    set((state) => ({
-      tracks: state.tracks.map((track) => {
+    set((state) => {
+      let activeBecameEmpty = false;
+      const tracks = state.tracks.map((track) => {
         if (track.id !== state.activeTrackId) return track;
 
         const kfs = track.keyframes;
@@ -264,9 +265,13 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
           }
         }
 
+        if (filtered.length === 0) activeBecameEmpty = true;
+
         return { ...track, keyframes: filtered, isDirty: true };
-      }),
-    })),
+      });
+
+      return activeBecameEmpty ? { tracks, viewportRect: null } : { tracks };
+    }),
 
   getActiveKeyframes: () => {
     const state = get();

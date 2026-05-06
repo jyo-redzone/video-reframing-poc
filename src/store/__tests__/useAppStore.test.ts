@@ -119,6 +119,31 @@ describe('useAppStore keyframe actions', () => {
     // kf3 remains the last KF — still null as before
     expect(kfs[1].transitionToNext).toBeNull();
   });
+
+  // ── deleteKeyframe (active track becomes empty) ────────────────────
+
+  it('deleteKeyframe of the only keyframe clears viewportRect', () => {
+    useAppStore.setState({ viewportRect: { x: 10, y: 20, width: 100, height: 80 } });
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+
+    useAppStore.getState().deleteKeyframe('kf1');
+
+    expect(useAppStore.getState().tracks[0].keyframes).toHaveLength(0);
+    expect(useAppStore.getState().viewportRect).toBeNull();
+  });
+
+  it('deleteKeyframe leaves viewportRect untouched when other keyframes remain', () => {
+    const rect = { x: 10, y: 20, width: 100, height: 80 };
+    useAppStore.setState({ viewportRect: rect });
+    const { addKeyframe } = useAppStore.getState();
+    addKeyframe(makeKf({ id: 'kf1', time: 1 }));
+    addKeyframe(makeKf({ id: 'kf2', time: 2 }));
+
+    useAppStore.getState().deleteKeyframe('kf1');
+
+    expect(useAppStore.getState().viewportRect).toEqual(rect);
+  });
 });
 
 describe('useAppStore getSelectedKeyframe', () => {
