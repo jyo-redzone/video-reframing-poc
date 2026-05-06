@@ -799,23 +799,23 @@ describe('useKeyboardShortcuts – [ / ] bbox scale', () => {
   function Inner() { useKeyboardShortcuts(); return null; }
   const ref = { current: null as unknown as HTMLVideoElement };
 
-  it('] grows bbox by 1.1× (uniform)', () => {
+  it('] grows bbox by 1.05× (uniform)', () => {
     const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
     fireCode('BracketRight', ']');
     const rect = useAppStore.getState().viewportRect!;
-    expect(rect.width).toBeCloseTo(960 * 1.1, 4);
-    expect(rect.height).toBeCloseTo(540 * 1.1, 4);
+    expect(rect.width).toBeCloseTo(960 * 1.05, 4);
+    expect(rect.height).toBeCloseTo(540 * 1.05, 4);
     // Aspect ratio preserved
     expect(rect.width / rect.height).toBeCloseTo(960 / 540, 4);
     unmount();
   });
 
-  it('[ shrinks bbox by 1/1.1× (uniform)', () => {
+  it('[ shrinks bbox by 1/1.05× (uniform)', () => {
     const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
     fireCode('BracketLeft', '[');
     const rect = useAppStore.getState().viewportRect!;
-    expect(rect.width).toBeCloseTo(960 / 1.1, 4);
-    expect(rect.height).toBeCloseTo(540 / 1.1, 4);
+    expect(rect.width).toBeCloseTo(960 / 1.05, 4);
+    expect(rect.height).toBeCloseTo(540 / 1.05, 4);
     unmount();
   });
 
@@ -915,7 +915,7 @@ describe('useKeyboardShortcuts – [ / ] bbox scale', () => {
     expect(kfs.length).toBeGreaterThan(0);
     const written = kfs.find((kf) => Math.abs(kf.time - 3) < 0.1);
     expect(written).toBeDefined();
-    expect(written?.sourceRect.width).toBeCloseTo(960 * 1.1, 2);
+    expect(written?.sourceRect.width).toBeCloseTo(960 * 1.05, 2);
     unmount();
   });
 
@@ -927,7 +927,7 @@ describe('useKeyboardShortcuts – [ / ] bbox scale', () => {
     expect(kfs.length).toBeGreaterThan(0);
     const written = kfs.find((kf) => Math.abs(kf.time - 3) < 0.1);
     expect(written).toBeDefined();
-    expect(written?.sourceRect.width).toBeCloseTo(960 / 1.1, 2);
+    expect(written?.sourceRect.width).toBeCloseTo(960 / 1.05, 2);
     unmount();
   });
 

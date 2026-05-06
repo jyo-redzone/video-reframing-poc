@@ -46,6 +46,37 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
     [videoWidth, videoHeight],
   );
 
+  /**
+   * Aspect-preserving clamp: if a candidate rect violates bounds or size limits,
+   * scale both dims uniformly by the most-constrained ratio, then position-clamp x/y.
+   * This avoids distorting the aspect ratio by clamping each axis independently.
+   */
+  const clampRectAspect = useCallback(
+    (rect: SourceRect): SourceRect => {
+      const minW = videoWidth * 0.1;
+      const minH = videoHeight * 0.1;
+      // Compute the scale factors needed to bring dims within bounds
+      const ratios: number[] = [1];
+      if (rect.width > videoWidth) ratios.push(videoWidth / rect.width);
+      if (rect.height > videoHeight) ratios.push(videoHeight / rect.height);
+      if (rect.width < minW) ratios.push(minW / rect.width);
+      if (rect.height < minH) ratios.push(minH / rect.height);
+      // Use the most-constrained ratio (min for shrink cases, max for grow cases)
+      // We separate: shrink ratios (<=1) and grow ratios (>=1)
+      const shrink = ratios.filter((r) => r <= 1);
+      const grow = ratios.filter((r) => r >= 1);
+      let scale = 1;
+      if (shrink.length > 1) scale = Math.min(...shrink);      // must shrink
+      else if (grow.length > 1) scale = Math.max(...grow);      // must grow
+      const w = rect.width * scale;
+      const h = rect.height * scale;
+      const x = Math.min(Math.max(rect.x, 0), videoWidth - w);
+      const y = Math.min(Math.max(rect.y, 0), videoHeight - h);
+      return { x, y, width: w, height: h };
+    },
+    [videoWidth, videoHeight],
+  );
+
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!interaction || !containerRef.current) return;
@@ -57,18 +88,15 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
         containerW, containerH, videoWidth, videoHeight,
       );
 
-      let dx = e.clientX - interaction.startMouse.x;
-      let dy = e.clientY - interaction.startMouse.y;
-      if (e.shiftKey) {
-        if (Math.abs(dx) > Math.abs(dy)) dy = 0;
-        else dx = 0;
-      }
+      const dx = e.clientX - interaction.startMouse.x;
+      const dy = e.clientY - interaction.startMouse.y;
 
       // Convert pixel deltas to source coords using render dimensions (not container)
       const dxSource = (dx / renderWidth) * videoWidth;
       const dySource = (dy / renderHeight) * videoHeight;
 
       if (interaction.type === 'drag') {
+        // Move is always unconstrained — Shift has no effect on drag
         const newRect: SourceRect = {
           x: interaction.startRect.x + dxSource,
           y: interaction.startRect.y + dySource,
@@ -78,33 +106,66 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
         setViewportRect(clampRect(newRect));
       } else if (interaction.type === 'resize') {
         const { corner, startRect } = interaction;
-        let newX = startRect.x;
-        let newY = startRect.y;
-        let newW = startRect.width;
-        let newH = startRect.height;
 
-        if (corner === 'nw') {
-          newX = startRect.x + dxSource;
-          newY = startRect.y + dySource;
-          newW = startRect.width - dxSource;
-          newH = startRect.height - dySource;
-        } else if (corner === 'ne') {
-          newY = startRect.y + dySource;
-          newW = startRect.width + dxSource;
-          newH = startRect.height - dySource;
-        } else if (corner === 'sw') {
-          newX = startRect.x + dxSource;
-          newW = startRect.width - dxSource;
-          newH = startRect.height + dySource;
-        } else if (corner === 'se') {
-          newW = startRect.width + dxSource;
-          newH = startRect.height + dySource;
+        if (e.shiftKey) {
+          // Aspect-preserving resize: use start rect's aspect ratio
+          const aspect = startRect.width / startRect.height;
+          // Compute normalized deltas (positive = growing that axis)
+          // Sign convention: nw flips both, ne flips y, sw flips x, se keeps both
+          const signX = corner === 'nw' || corner === 'sw' ? -1 : 1;
+          const signY = corner === 'nw' || corner === 'ne' ? -1 : 1;
+          const dxSigned = dxSource * signX;
+          const dySigned = dySource * signY;
+          const dxNorm = dxSigned / startRect.width;
+          const dyNorm = dySigned / startRect.height;
+          // Whichever normalized delta is larger drives the scale
+          const scale = Math.abs(dxNorm) >= Math.abs(dyNorm)
+            ? 1 + dxNorm
+            : 1 + dyNorm;
+          const newW = startRect.width * scale;
+          const newH = startRect.height * scale;
+          // Place rect based on corner's anchor
+          let newX = startRect.x;
+          let newY = startRect.y;
+          if (corner === 'nw') {
+            newX = startRect.x + (startRect.width - newW);
+            newY = startRect.y + (startRect.height - newH);
+          } else if (corner === 'ne') {
+            newY = startRect.y + (startRect.height - newH);
+          } else if (corner === 'sw') {
+            newX = startRect.x + (startRect.width - newW);
+          }
+          // se: x/y anchored at startRect.x/y (top-left stays fixed)
+          setViewportRect(clampRectAspect({ x: newX, y: newY, width: newW, height: newH }));
+        } else {
+          let newX = startRect.x;
+          let newY = startRect.y;
+          let newW = startRect.width;
+          let newH = startRect.height;
+
+          if (corner === 'nw') {
+            newX = startRect.x + dxSource;
+            newY = startRect.y + dySource;
+            newW = startRect.width - dxSource;
+            newH = startRect.height - dySource;
+          } else if (corner === 'ne') {
+            newY = startRect.y + dySource;
+            newW = startRect.width + dxSource;
+            newH = startRect.height - dySource;
+          } else if (corner === 'sw') {
+            newX = startRect.x + dxSource;
+            newW = startRect.width - dxSource;
+            newH = startRect.height + dySource;
+          } else if (corner === 'se') {
+            newW = startRect.width + dxSource;
+            newH = startRect.height + dySource;
+          }
+
+          setViewportRect(clampRect({ x: newX, y: newY, width: newW, height: newH }));
         }
-
-        setViewportRect(clampRect({ x: newX, y: newY, width: newW, height: newH }));
       }
     },
-    [interaction, containerRef, videoWidth, videoHeight, setViewportRect, clampRect],
+    [interaction, containerRef, videoWidth, videoHeight, setViewportRect, clampRect, clampRectAspect],
   );
 
   const handleMouseUp = useCallback(() => {

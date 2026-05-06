@@ -283,9 +283,9 @@ export default function useKeyboardShortcuts(): void {
         const growing = e.code === 'BracketRight';
         let factor: number;
         if (growing) {
-          factor = e.shiftKey ? 1.25 : 1.1;
+          factor = e.shiftKey ? 1.25 : 1.05;
         } else {
-          factor = e.shiftKey ? 1 / 1.25 : 1 / 1.1;
+          factor = e.shiftKey ? 1 / 1.25 : 1 / 1.05;
         }
 
         const { x: currentX, y: currentY, width: currentWidth, height: currentHeight } = viewportRect;

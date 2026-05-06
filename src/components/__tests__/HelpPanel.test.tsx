@@ -79,7 +79,7 @@ describe('HelpPanel', () => {
     expect(getByText('Move bbox 10px')).toBeTruthy();
     expect(getByText('Grow / shrink bbox')).toBeTruthy();
     expect(getByText('Grow / shrink bbox (larger step)')).toBeTruthy();
-    expect(getByText('Axis / square constraint (drag)')).toBeTruthy();
+    expect(getByText('Maintain aspect ratio (resize / draw)')).toBeTruthy();
   });
 
   it('bbox-move row renders 4 arrow chips with no "+" between them', () => {
@@ -142,7 +142,10 @@ describe('HelpPanel', () => {
 
   it('sections appear in order: Bounding Box, Player, Timeline, Help', () => {
     const { container } = render(<HelpPanel />);
-    const headers = Array.from(container.querySelectorAll('h3')).map((el) => el.textContent);
+    // Section headers are <p> elements with font-semibold text-text-primary
+    const headers = Array.from(
+      container.querySelectorAll('p.font-semibold.text-text-primary'),
+    ).map((el) => el.textContent);
     expect(headers).toEqual(['Bounding Box', 'Player', 'Timeline', 'Help']);
   });
 

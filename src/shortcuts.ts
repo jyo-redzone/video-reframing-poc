@@ -89,7 +89,7 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'bbox-move-shift',  keyGroups: [['Shift', ['←', '→', '↑', '↓']]], description: 'Move bbox 10px',                   surface: 'Bbox' },
   { id: 'bbox-scale',       keyGroups: [[']'], ['[']],                      description: 'Grow / shrink bbox',               surface: 'Bbox' },
   { id: 'bbox-scale-shift', keyGroups: [['Shift', [']', '[']]],             description: 'Grow / shrink bbox (larger step)', surface: 'Bbox' },
-  { id: 'bbox-constrain',   keyGroups: [['Shift']],               description: 'Axis / square constraint (drag)',  surface: 'Bbox' },
+  { id: 'bbox-constrain',   keyGroups: [['Shift']],               description: 'Maintain aspect ratio (resize / draw)',  surface: 'Bbox' },
 
   // ── Help ─────────────────────────────────────────────────────────────
   {

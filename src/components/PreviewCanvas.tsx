@@ -104,7 +104,7 @@ export default function PreviewCanvas({ containerRef }: PreviewCanvasProps) {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
+      className="absolute inset-0 w-full h-full bg-appbar"
       style={{ zIndex: 15 }}
     />
   );

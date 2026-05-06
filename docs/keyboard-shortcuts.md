@@ -8,7 +8,7 @@ This document is the source of truth for the agreed shortcut map. Implementation
 
 ## Conventions
 
-- **`Shift` modifier** → larger step (e.g. 10px instead of 1px) or geometry constraint while dragging (square / horizontal / vertical).
+- **`Shift` modifier** → larger step (e.g. 10px instead of 1px) or aspect-ratio constraint while resizing / drawing a bbox.
 - **Reserved combos** → `Ctrl`, `Meta`, and `Alt` are left to the OS / browser and are never intercepted.
 - **Focus guard** → no shortcuts fire while focus is inside an `INPUT`, `TEXTAREA`, `SELECT`, or `contenteditable` element.
 - **Mode guard** → most shortcuts are active in **Edit mode** only. View mode is read-only and accepts only navigation shortcuts.
@@ -52,11 +52,11 @@ This document is the source of truth for the agreed shortcut map. Implementation
 |---|---|---|
 | `←` `→` `↑` `↓` | Move bbox 1px | Edit mode only; requires a viewport rect. While recording, writes a keyframe at the playhead. |
 | `Shift+←` / `Shift+→` / `Shift+↑` / `Shift+↓` | Move bbox 10px | Same recording behavior as the 1px variant. |
-| `]` | Grow bbox (uniform scale up) | 1.1× per press, scaled around rect center. Clamped to the existing 100% video-frame max. |
-| `[` | Shrink bbox (uniform scale down) | 1.1× per press, scaled around rect center. Clamped to the existing 10% video-frame min. |
+| `]` | Grow bbox (uniform scale up) | 1.05× per press, scaled around rect center. Clamped to the existing 100% video-frame max. |
+| `[` | Shrink bbox (uniform scale down) | 1.05× per press, scaled around rect center. Clamped to the existing 10% video-frame min. |
 | `Shift+]` | Grow bbox (larger step) | |
 | `Shift+[` | Shrink bbox (larger step) | |
-| `Shift` (held while dragging) | Constrain drag to axis / square | Existing modifier behavior in both `BoundingBoxTool` (drawing) and `ViewportOverlay` (manipulation). |
+| `Shift` (held while resizing or drawing) | Maintain aspect ratio while resizing or drawing | During resize: maintains the existing rect's aspect ratio. During draw: constrains to the video's aspect ratio. Move (drag the body) is unaffected. |
 
 ---
 
@@ -85,7 +85,7 @@ This document is the source of truth for the agreed shortcut map. Implementation
 | `]` | Grow bbox | Bbox |
 | `[` | Shrink bbox | Bbox |
 | `Shift+]` / `Shift+[` | Grow / shrink bbox (larger step) | Bbox |
-| `Shift` (drag modifier) | Axis / square constraint | Bbox |
+| `Shift` (resize / draw modifier) | Maintain aspect ratio | Bbox |
 
 ---
 

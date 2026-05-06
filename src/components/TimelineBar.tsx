@@ -21,16 +21,6 @@ type DragState =
 // Picker state: which segment was clicked. Popover X is derived from the segment center.
 type PickerState = { startKfId: string } | null;
 
-function formatTimecode(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  const hh = String(h).padStart(2, '0');
-  const mm = String(m).padStart(2, '0');
-  const ss = String(Math.floor(s)).padStart(2, '0');
-  const ms = String(Math.floor((s - Math.floor(s)) * 1000)).padStart(3, '0');
-  return `${hh}:${mm}:${ss}.${ms}`;
-}
 
 function formatTickLabel(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -513,7 +503,7 @@ export default function TimelineBar() {
           <g pointerEvents="none">
             <rect x={tooltipX - 40} y={2} width={80} height={14} rx={2} fill="rgba(0,0,0,0.75)" />
             <text x={tooltipX} y={12} textAnchor="middle" fontSize={8} fill="rgba(255,255,255,0.85)">
-              {formatTimecode(hoverTime)}
+              {formatTickLabel(hoverTime)}
             </text>
           </g>
         )}

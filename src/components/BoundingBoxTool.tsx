@@ -47,10 +47,25 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
       let cx = clampedX;
       let cy = clampedY;
       if (e.shiftKey && drawingRef.current) {
-        const dx = cx - drawingRef.current.startX;
-        const dy = cy - drawingRef.current.startY;
-        if (Math.abs(dx) > Math.abs(dy)) cy = drawingRef.current.startY;
-        else cx = drawingRef.current.startX;
+        const meta = useAppStore.getState().videoMetadata;
+        if (meta) {
+          const aspect = meta.width / meta.height;
+          const { startX, startY } = drawingRef.current;
+          const dx = cx - startX;
+          const dy = cy - startY;
+          // Determine which axis drives based on which matches the target aspect
+          const wantedH = Math.abs(dx) / aspect;
+          if (Math.abs(dy) >= wantedH) {
+            // dy drives: constrain cx so width matches dy*aspect
+            cx = startX + Math.sign(dx || 1) * Math.abs(dy) * aspect;
+          } else {
+            // dx drives: constrain cy so height matches dx/aspect
+            cy = startY + Math.sign(dy || 1) * Math.abs(dx) / aspect;
+          }
+          // Re-clamp after snapping (snapping may push outside container bounds)
+          cx = Math.max(0, Math.min(cx, containerBounds.width));
+          cy = Math.max(0, Math.min(cy, containerBounds.height));
+        }
       }
       setDrawing((prev) => (prev ? { ...prev, currentX: cx, currentY: cy } : null));
     },
