@@ -895,3 +895,20 @@ describe('useAppStore dirty flag on mutations', () => {
     expect(activeTrack().isDirty).toBe(false);
   });
 });
+
+// ── videoUrl ────────────────────────────────────────────────────────────────
+
+describe('videoUrl', () => {
+  beforeEach(() => {
+    useAppStore.setState({ videoUrl: null });
+  });
+
+  it('initialises as null', () => {
+    expect(useAppStore.getState().videoUrl).toBeNull();
+  });
+
+  it('setVideoUrl stores the supplied URL', () => {
+    useAppStore.getState().setVideoUrl('https://example.com/stream.m3u8');
+    expect(useAppStore.getState().videoUrl).toBe('https://example.com/stream.m3u8');
+  });
+});

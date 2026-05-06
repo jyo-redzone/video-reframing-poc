@@ -6,6 +6,7 @@ const UNSET_RANGE = { inTime: 0, outTime: 0 } as const;
 
 type AppState = {
   // Video
+  videoUrl: string | null;
   videoMetadata: VideoMetadata | null;
 
   // Track
@@ -38,6 +39,7 @@ type AppState = {
 
 type AppActions = {
   // Video
+  setVideoUrl: (url: string) => void;
   setVideoMetadata: (meta: VideoMetadata) => void;
 
   // Track CRUD
@@ -100,6 +102,7 @@ const sortByTime = (keyframes: Keyframe[]): Keyframe[] =>
 
 const useAppStore = create<AppState & AppActions>()((set, get) => ({
   // ── Initial state ──────────────────────────────────────────────────
+  videoUrl: null,
   videoMetadata: null,
   tracks: [{ id: 'track_default', videoId: '', name: 'clip-1', keyframes: [], range: { inTime: 0, outTime: 0 }, isDirty: false }],
   activeTrackId: 'track_default',
@@ -114,6 +117,8 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   timelineZoomOffset: 0,
 
   // ── Video ──────────────────────────────────────────────────────────
+  setVideoUrl: (url) => set({ videoUrl: url }),
+
   setVideoMetadata: (meta) =>
     set((state) => {
       const activeTrack = state.tracks.find((t) => t.id === state.activeTrackId);

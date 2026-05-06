@@ -3,6 +3,7 @@ import TrackPanel from './components/TrackPanel';
 import HelpPanel from './components/HelpPanel';
 import PlayerPanel from './components/PlayerPanel';
 import TimelineBar from './components/TimelineBar';
+import LandingScreen from './components/LandingScreen';
 import { VideoRefProvider } from './components/VideoRefContext';
 import usePlayback from './hooks/usePlayback';
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
@@ -59,6 +60,11 @@ function AppContent() {
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoUrl = useAppStore((s) => s.videoUrl);
+
+  if (videoUrl === null) {
+    return <LandingScreen />;
+  }
 
   return (
     <VideoRefProvider value={videoRef}>
