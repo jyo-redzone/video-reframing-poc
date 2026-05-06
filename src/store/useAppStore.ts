@@ -27,6 +27,13 @@ type AppState = {
 
   // Help panel
   helpPanelOpen: boolean;
+
+  // Playback rate
+  playbackRate: number;
+
+  // Timeline zoom
+  timelineZoom: number;
+  timelineZoomOffset: number;
 };
 
 type AppActions = {
@@ -78,6 +85,14 @@ type AppActions = {
   // Help panel
   toggleHelpPanel: () => void;
   setHelpPanelOpen: (open: boolean) => void;
+
+  // Playback rate
+  setPlaybackRate: (rate: number) => void;
+
+  // Timeline zoom
+  setTimelineZoom: (zoom: number) => void;
+  setTimelineZoomOffset: (offset: number) => void;
+  resetTimelineZoom: () => void;
 };
 
 const sortByTime = (keyframes: Keyframe[]): Keyframe[] =>
@@ -94,6 +109,9 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   isPlaying: false,
   viewportRect: null,
   helpPanelOpen: false,
+  playbackRate: 1,
+  timelineZoom: 1,
+  timelineZoomOffset: 0,
 
   // ── Video ──────────────────────────────────────────────────────────
   setVideoMetadata: (meta) =>
@@ -394,6 +412,14 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   // ── Help panel ─────────────────────────────────────────────────────
   toggleHelpPanel: () => set((state) => ({ helpPanelOpen: !state.helpPanelOpen })),
   setHelpPanelOpen: (open) => set({ helpPanelOpen: open }),
+
+  // ── Playback rate ──────────────────────────────────────────────────
+  setPlaybackRate: (rate) => set({ playbackRate: rate }),
+
+  // ── Timeline zoom ──────────────────────────────────────────────────
+  setTimelineZoom: (zoom) => set({ timelineZoom: Math.max(1, Math.min(256, zoom)) }),
+  setTimelineZoomOffset: (offset) => set({ timelineZoomOffset: offset }),
+  resetTimelineZoom: () => set({ timelineZoom: 1, timelineZoomOffset: 0 }),
 
 }));
 

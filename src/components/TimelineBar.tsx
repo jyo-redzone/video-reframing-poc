@@ -66,8 +66,10 @@ export default function TimelineBar() {
   const setTrackRange = useAppStore((s) => s.setTrackRange);
   const setTransition = useAppStore((s) => s.setTransition);
 
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [zoomOffset, setZoomOffset] = useState(0);
+  const zoomLevel = useAppStore((s) => s.timelineZoom);
+  const zoomOffset = useAppStore((s) => s.timelineZoomOffset);
+  const setZoomLevel = useAppStore((s) => s.setTimelineZoom);
+  const setZoomOffset = useAppStore((s) => s.setTimelineZoomOffset);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [hoverX, setHoverX] = useState(0);
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -79,8 +81,8 @@ export default function TimelineBar() {
 
   // Keep a stable ref to the values needed inside window event listeners so
   // the listeners don't capture stale closure state.
-  const dragParamsRef = useRef({ visibleStart, visibleDuration, duration, svgRef });
-  dragParamsRef.current = { visibleStart, visibleDuration, duration, svgRef };
+  const dragParamsRef = useRef({ visibleStart, visibleDuration, duration, svgRef, zoomOffset });
+  dragParamsRef.current = { visibleStart, visibleDuration, duration, svgRef, zoomOffset };
 
   const xFor = (time: number) =>
     TL_X0 + ((time - visibleStart) / visibleDuration) * (TL_X1 - TL_X0);
@@ -238,8 +240,9 @@ export default function TimelineBar() {
       e.preventDefault();
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0;
       if (delta === 0) return;
-      const timeShift = (delta / 300) * visibleDuration;
-      setZoomOffset((prev) => Math.max(0, Math.min(duration - visibleDuration, prev + timeShift)));
+      const { visibleDuration: vd, duration: dur, zoomOffset: currentOffset } = dragParamsRef.current;
+      const timeShift = (delta / 300) * vd;
+      setZoomOffset(Math.max(0, Math.min(dur - vd, currentOffset + timeShift)));
     };
     svg.addEventListener('wheel', handleWheel, { passive: false });
     return () => svg.removeEventListener('wheel', handleWheel);

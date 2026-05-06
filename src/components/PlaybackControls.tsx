@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import useAppStore from '../store/useAppStore';
 import { useVideoRef } from './VideoRefContext';
-
-const SPEED_OPTIONS = [0.5, 1, 1.5, 2, 4, 8, 16];
+import { SPEED_OPTIONS } from '../constants';
 
 export default function PlaybackControls() {
   const videoRef = useVideoRef();
@@ -18,7 +16,8 @@ export default function PlaybackControls() {
   const pauseRecording = useAppStore((s) => s.pauseRecording);
   const resumeRecording = useAppStore((s) => s.resumeRecording);
   const stopRecording = useAppStore((s) => s.stopRecording);
-  const [playbackRate, setPlaybackRate] = useState(1);
+  const playbackRate = useAppStore((s) => s.playbackRate);
+  const setPlaybackRate = useAppStore((s) => s.setPlaybackRate);
 
   const fps = videoMetadata?.fps ?? null;
   const frameDuration = fps != null ? 1 / fps : null;
@@ -56,7 +55,7 @@ export default function PlaybackControls() {
     setCurrentTime(newTime);
   };
 
-  const handleRateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleRateChange = (e: { target: HTMLSelectElement }) => {
     const rate = parseFloat(e.target.value);
     setPlaybackRate(rate);
     if (videoRef.current) videoRef.current.playbackRate = rate;

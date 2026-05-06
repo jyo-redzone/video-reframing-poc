@@ -8,7 +8,8 @@
   --color-appbar: #0C1116;
   --color-surface: #0C1116;
   --color-surface-raised: #0C1116;
-  --color-bg: #0F1820;
+  --color-bg: #0C1116;
+  /* --color-bg: #0F1820; */
 
   /* Text (dark mode) */
   --color-text-primary: rgba(255, 255, 255, 0.8);

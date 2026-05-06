@@ -257,7 +257,7 @@ export default function TrackPanel() {
 
         <button
           type="button"
-          className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary font-medium uppercase hover:bg-white/10"
+          className="w-full rounded-default border bg-surface-raised px-3 py-2 text-sm text-text-primary font-medium uppercase hover:bg-white/10"
           onClick={() => createTrack()}
         >
           Create clip
@@ -312,7 +312,7 @@ export default function TrackPanel() {
           </button>
           <button
             type="button"
-            className="flex-1 rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm font-medium uppercase tracking-button text-text-primary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 rounded-default bg-white px-3 py-2 text-sm font-medium uppercase tracking-button text-black hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={() => window.alert('Export not available in POC')}
             disabled={exportDisabled}
           >
