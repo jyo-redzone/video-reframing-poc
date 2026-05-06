@@ -7,7 +7,6 @@ export default function PlaybackControls() {
   const isPlaying = useAppStore((s) => s.isPlaying);
   const setIsPlaying = useAppStore((s) => s.setIsPlaying);
   const setCurrentTime = useAppStore((s) => s.setCurrentTime);
-  const videoMetadata = useAppStore((s) => s.videoMetadata);
   const mode = useAppStore((s) => s.mode);
   const recordingState = useAppStore((s) => s.recordingState);
   const viewportRect = useAppStore((s) => s.viewportRect);
@@ -18,10 +17,6 @@ export default function PlaybackControls() {
   const stopRecording = useAppStore((s) => s.stopRecording);
   const playbackRate = useAppStore((s) => s.playbackRate);
   const setPlaybackRate = useAppStore((s) => s.setPlaybackRate);
-
-  const fps = videoMetadata?.fps ?? null;
-  const frameDuration = fps != null ? 1 / fps : null;
-  const frameStepDisabled = frameDuration === null;
 
   const handlePlayPause = () => {
     const video = videoRef.current;
@@ -35,22 +30,20 @@ export default function PlaybackControls() {
     }
   };
 
-  const handlePrevFrame = () => {
-    if (frameStepDisabled) return;
+  const handlePrevSecond = () => {
     const video = videoRef.current;
     if (!video) return;
     if (isPlaying) { video.pause(); setIsPlaying(false); }
-    const newTime = Math.max(0, video.currentTime - frameDuration);
+    const newTime = Math.max(0, video.currentTime - 1);
     video.currentTime = newTime;
     setCurrentTime(newTime);
   };
 
-  const handleNextFrame = () => {
-    if (frameStepDisabled) return;
+  const handleNextSecond = () => {
     const video = videoRef.current;
     if (!video) return;
     if (isPlaying) { video.pause(); setIsPlaying(false); }
-    const newTime = Math.min(video.duration || Infinity, video.currentTime + frameDuration);
+    const newTime = Math.min(video.duration || Infinity, video.currentTime + 1);
     video.currentTime = newTime;
     setCurrentTime(newTime);
   };
@@ -68,10 +61,9 @@ export default function PlaybackControls() {
     <div className="flex items-center justify-center gap-1">
       {/* Transport controls */}
       <button
-        className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-        title="Prev frame"
-        onClick={handlePrevFrame}
-        disabled={frameStepDisabled}
+        className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10"
+        title="Prev second"
+        onClick={handlePrevSecond}
       >
         ⏮
       </button>
@@ -83,10 +75,9 @@ export default function PlaybackControls() {
         {isPlaying ? '⏸' : '▶'}
       </button>
       <button
-        className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-        title="Next frame"
-        onClick={handleNextFrame}
-        disabled={frameStepDisabled}
+        className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10"
+        title="Next second"
+        onClick={handleNextSecond}
       >
         ⏭
       </button>

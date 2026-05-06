@@ -21,8 +21,8 @@ This document is the source of truth for the agreed shortcut map. Implementation
 | Key | Action | Notes |
 |---|---|---|
 | `Space` | Play / pause | Always available. |
-| `,` | Step back one frame | |
-| `.` | Step forward one frame | |
+| `,` | Step back one second | |
+| `.` | Step forward one second | |
 | `Shift+,` | Cycle playback speed down | Through existing dropdown values: 0.5× → 1× → 1.5× → 2× → 4× → 8× → 16×. |
 | `Shift+.` | Cycle playback speed up | Same list. |
 | `R` | Record toggle | Context-aware: idle → recording, recording → paused, paused → recording. Edit mode only. Disabled when no active track or no viewport rect. |
@@ -65,8 +65,8 @@ This document is the source of truth for the agreed shortcut map. Implementation
 | Key | Action | Surface |
 |---|---|---|
 | `Space` | Play / pause | Player |
-| `,` | Step 1 frame back | Player |
-| `.` | Step 1 frame forward | Player |
+| `,` | Step 1 second back | Player |
+| `.` | Step 1 second forward | Player |
 | `Shift+,` | Speed down | Player |
 | `Shift+.` | Speed up | Player |
 | `R` | Record toggle | Player |

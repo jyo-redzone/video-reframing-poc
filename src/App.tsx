@@ -33,9 +33,12 @@ function AppContent() {
             <TrackPanel />
           </div>
           {helpPanelOpen && (
-            <div className="max-h-[60%] min-h-0 overflow-y-auto">
-              <HelpPanel />
-            </div>
+            <>
+              <div className="border-t border-border-subtle" />
+              <div className="max-h-[60%] min-h-0 overflow-y-auto">
+                <HelpPanel />
+              </div>
+            </>
           )}
         </aside>
       </main>

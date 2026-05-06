@@ -79,30 +79,26 @@ export default function useKeyboardShortcuts(): void {
         return;
       }
 
-      // , — step 1 frame back (always-on, unshifted only)
+      // , — step 1 second back (always-on, unshifted only)
       if (e.key === ',' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const { videoMetadata, setIsPlaying, setCurrentTime, isPlaying } = useAppStore.getState();
-        if (!videoMetadata) return;
+        const { setIsPlaying, setCurrentTime, isPlaying } = useAppStore.getState();
         const video = videoRef.current;
         if (!video) return;
-        const frameDuration = 1 / videoMetadata.fps;
         if (isPlaying) { video.pause(); setIsPlaying(false); }
-        const newTime = Math.max(0, video.currentTime - frameDuration);
+        const newTime = Math.max(0, video.currentTime - 1);
         video.currentTime = newTime;
         setCurrentTime(newTime);
         e.preventDefault();
         return;
       }
 
-      // . — step 1 frame forward (always-on, unshifted only)
+      // . — step 1 second forward (always-on, unshifted only)
       if (e.key === '.' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const { videoMetadata, setIsPlaying, setCurrentTime, isPlaying } = useAppStore.getState();
-        if (!videoMetadata) return;
+        const { setIsPlaying, setCurrentTime, isPlaying } = useAppStore.getState();
         const video = videoRef.current;
         if (!video) return;
-        const frameDuration = 1 / videoMetadata.fps;
         if (isPlaying) { video.pause(); setIsPlaying(false); }
-        const newTime = Math.min(video.duration || Infinity, video.currentTime + frameDuration);
+        const newTime = Math.min(video.duration || Infinity, video.currentTime + 1);
         video.currentTime = newTime;
         setCurrentTime(newTime);
         e.preventDefault();
@@ -217,7 +213,7 @@ export default function useKeyboardShortcuts(): void {
         return;
       }
 
-      // ── Existing bbox / delete handlers ──────────────────────────────
+      // ── Bbox movement shortcuts (arrow keys) ─────────────────────────
 
       const isArrow =
         e.key === 'ArrowUp' ||
@@ -225,23 +221,20 @@ export default function useKeyboardShortcuts(): void {
         e.key === 'ArrowLeft' ||
         e.key === 'ArrowRight';
 
-      const isDelete = e.key === 'Delete' || e.key === 'Backspace';
-
-      if (!isArrow && !isDelete) return;
-
-      // Don't intercept when Ctrl, Meta, or Alt modifiers are held (reserved)
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-
       if (isArrow) {
-        const kf = useAppStore.getState().getSelectedKeyframe();
-        if (kf === null) return;
+        // Don't intercept when Ctrl, Meta, or Alt modifiers are held (reserved)
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-        const { videoMetadata, updateKeyframe, setViewportRect } = useAppStore.getState();
+        const { viewportRect, videoMetadata, setViewportRect, recordingState, currentTime, commitKeyframeAtTime } =
+          useAppStore.getState();
+
+        if (viewportRect === null || videoMetadata === null) return;
+
+        const videoWidth = videoMetadata.width;
+        const videoHeight = videoMetadata.height;
         const step = e.shiftKey ? 10 : 1;
-        const videoWidth = videoMetadata?.width ?? 0;
-        const videoHeight = videoMetadata?.height ?? 0;
 
-        let { x, y, width, height } = kf.sourceRect;
+        let { x, y, width, height } = viewportRect;
 
         switch (e.key) {
           case 'ArrowLeft':
@@ -258,15 +251,85 @@ export default function useKeyboardShortcuts(): void {
             break;
         }
 
+        // No-op if rect didn't actually change (e.g. already at edge)
+        if (x === viewportRect.x && y === viewportRect.y) return;
+
         const newRect = { x, y, width, height };
-        updateKeyframe(kf.id, { sourceRect: newRect });
         setViewportRect(newRect);
+        if (recordingState !== 'idle') {
+          commitKeyframeAtTime(currentTime, newRect);
+        }
 
         e.preventDefault();
         return;
       }
 
+      // ── Bbox scale shortcuts ([ / ]) ──────────────────────────────────
+
+      const isBracket = e.code === 'BracketLeft' || e.code === 'BracketRight';
+
+      if (isBracket) {
+        // Don't intercept when Ctrl, Meta, or Alt modifiers are held (reserved)
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+        const { viewportRect, videoMetadata, setViewportRect, recordingState, currentTime, commitKeyframeAtTime } =
+          useAppStore.getState();
+
+        if (viewportRect === null || videoMetadata === null) return;
+
+        const videoWidth = videoMetadata.width;
+        const videoHeight = videoMetadata.height;
+
+        const growing = e.code === 'BracketRight';
+        let factor: number;
+        if (growing) {
+          factor = e.shiftKey ? 1.25 : 1.1;
+        } else {
+          factor = e.shiftKey ? 1 / 1.25 : 1 / 1.1;
+        }
+
+        const { x: currentX, y: currentY, width: currentWidth, height: currentHeight } = viewportRect;
+
+        // Compute effective factor that keeps both dims within bounds
+        let effectiveFactor: number;
+        if (growing) {
+          effectiveFactor = Math.min(factor, videoWidth / currentWidth, videoHeight / currentHeight);
+        } else {
+          effectiveFactor = Math.max(factor, (videoWidth * 0.1) / currentWidth, (videoHeight * 0.1) / currentHeight);
+        }
+
+        // No-op if already pinned to a bound
+        if (effectiveFactor === 1) return;
+
+        const newWidth = currentWidth * effectiveFactor;
+        const newHeight = currentHeight * effectiveFactor;
+
+        // Recenter around original center
+        let newX = currentX + (currentWidth - newWidth) / 2;
+        let newY = currentY + (currentHeight - newHeight) / 2;
+
+        // Final clamp to video bounds
+        newX = Math.min(Math.max(newX, 0), videoWidth - newWidth);
+        newY = Math.min(Math.max(newY, 0), videoHeight - newHeight);
+
+        const newRect = { x: newX, y: newY, width: newWidth, height: newHeight };
+        setViewportRect(newRect);
+        if (recordingState !== 'idle') {
+          commitKeyframeAtTime(currentTime, newRect);
+        }
+
+        e.preventDefault();
+        return;
+      }
+
+      // ── Delete / Backspace — delete selected keyframe ─────────────────
+
+      const isDelete = e.key === 'Delete' || e.key === 'Backspace';
+
       if (isDelete) {
+        // Don't intercept when Ctrl, Meta, or Alt modifiers are held (reserved)
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
         const kf = useAppStore.getState().getSelectedKeyframe();
         if (kf === null) return;
 

@@ -304,7 +304,7 @@ export default function TrackPanel() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="flex-1 rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/90 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/80 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={openSaveDialog}
             disabled={saveDisabled}
           >
@@ -312,7 +312,7 @@ export default function TrackPanel() {
           </button>
           <button
             type="button"
-            className="flex-1 rounded-default bg-white px-3 py-2 text-sm font-medium uppercase tracking-button text-black hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 rounded-default bg-white px-3 py-2 text-sm font-medium uppercase tracking-button text-black hover:bg-white/80 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={() => window.alert('Export not available in POC')}
             disabled={exportDisabled}
           >

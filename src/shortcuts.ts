@@ -2,8 +2,13 @@ export type ShortcutSurface = 'Player' | 'Timeline' | 'Bbox' | 'Help';
 
 export type Shortcut = {
   id: string;
-  /** Display tokens, e.g. ['Space'], ['Shift', ','], ['←', '→', '↑', '↓'] */
-  keys: string[];
+  /**
+   * Each inner array is one binding. Within a binding, items separate with '+':
+   *   - string item → one chip
+   *   - string[] item → multiple alternative chips rendered with no separator
+   * Multiple bindings (top-level groups) render separated by '/'.
+   */
+  keyGroups: (string | string[])[][];
   description: string;
   surface: ShortcutSurface;
 };
@@ -12,151 +17,84 @@ export const SHORTCUTS: Shortcut[] = [
   // ── Player ──────────────────────────────────────────────────────────
   {
     id: 'play-pause',
-    keys: ['Space'],
+    keyGroups: [['Space']],
     description: 'Play / pause',
     surface: 'Player',
   },
   {
-    id: 'frame-back',
-    keys: [','],
-    description: 'Step 1 frame back',
+    id: 'second-step',
+    keyGroups: [[','], ['.']],
+    description: 'Step 1 second back / forward',
     surface: 'Player',
   },
   {
-    id: 'frame-forward',
-    keys: ['.'],
-    description: 'Step 1 frame forward',
-    surface: 'Player',
-  },
-  {
-    id: 'speed-down',
-    keys: ['Shift', ','],
-    description: 'Speed down',
-    surface: 'Player',
-  },
-  {
-    id: 'speed-up',
-    keys: ['Shift', '.'],
-    description: 'Speed up',
+    id: 'speed-cycle',
+    keyGroups: [['Shift', [',', '.']]],
+    description: 'Cycle playback speed',
     surface: 'Player',
   },
   {
     id: 'record-toggle',
-    keys: ['R'],
+    keyGroups: [['R']],
     description: 'Record toggle',
     surface: 'Player',
   },
   {
     id: 'record-stop',
-    keys: ['Shift', 'R'],
+    keyGroups: [['Shift', 'R']],
     description: 'Stop recording',
     surface: 'Player',
   },
 
   // ── Timeline ─────────────────────────────────────────────────────────
   {
-    id: 'zoom-in',
-    keys: ['='],
-    description: 'Timeline zoom in',
-    surface: 'Timeline',
-  },
-  {
-    id: 'zoom-out',
-    keys: ['-'],
-    description: 'Timeline zoom out',
+    id: 'zoom',
+    keyGroups: [['='], ['-']],
+    description: 'Timeline zoom in / out',
     surface: 'Timeline',
   },
   {
     id: 'zoom-reset',
-    keys: ['0'],
-    description: 'Timeline zoom reset',
+    keyGroups: [['0']],
+    description: 'Reset timeline zoom',
     surface: 'Timeline',
   },
   {
-    id: 'seek-start',
-    keys: ['Home'],
-    description: 'Seek to clip start',
+    id: 'seek-ends',
+    keyGroups: [['Home'], ['End']],
+    description: 'Seek to clip start / end',
     surface: 'Timeline',
   },
   {
-    id: 'seek-end',
-    keys: ['End'],
-    description: 'Seek to clip end',
-    surface: 'Timeline',
-  },
-  {
-    id: 'set-in-point',
-    keys: ['I'],
-    description: 'Set in-point',
-    surface: 'Timeline',
-  },
-  {
-    id: 'set-out-point',
-    keys: ['O'],
-    description: 'Set out-point',
+    id: 'in-out-point',
+    keyGroups: [['I'], ['O']],
+    description: 'Set in / out point',
     surface: 'Timeline',
   },
   {
     id: 'delete-keyframe',
-    keys: ['Delete', 'Backspace'],
+    keyGroups: [['Delete'], ['Backspace']],
     description: 'Delete selected keyframe',
     surface: 'Timeline',
   },
   {
     id: 'close-popover',
-    keys: ['Esc'],
+    keyGroups: [['Esc']],
     description: 'Close popover / dialog',
     surface: 'Timeline',
   },
 
   // ── Bbox ─────────────────────────────────────────────────────────────
-  {
-    id: 'bbox-move-1px',
-    keys: ['←', '→', '↑', '↓'],
-    description: 'Move bbox 1px',
-    surface: 'Bbox',
-  },
-  {
-    id: 'bbox-move-10px',
-    keys: ['Shift', '←/→/↑/↓'],
-    description: 'Move bbox 10px',
-    surface: 'Bbox',
-  },
-  {
-    id: 'bbox-grow',
-    keys: [']'],
-    description: 'Grow bbox',
-    surface: 'Bbox',
-  },
-  {
-    id: 'bbox-shrink',
-    keys: ['['],
-    description: 'Shrink bbox',
-    surface: 'Bbox',
-  },
-  {
-    id: 'bbox-grow-large',
-    keys: ['Shift', ']'],
-    description: 'Grow bbox (larger step)',
-    surface: 'Bbox',
-  },
-  {
-    id: 'bbox-shrink-large',
-    keys: ['Shift', '['],
-    description: 'Shrink bbox (larger step)',
-    surface: 'Bbox',
-  },
-  {
-    id: 'bbox-drag-constrain',
-    keys: ['Shift'],
-    description: 'Axis / square constraint (drag)',
-    surface: 'Bbox',
-  },
+  { id: 'bbox-move',        keyGroups: [[['←', '→', '↑', '↓']]],          description: 'Move bbox 1px',                    surface: 'Bbox' },
+  { id: 'bbox-move-shift',  keyGroups: [['Shift', ['←', '→', '↑', '↓']]], description: 'Move bbox 10px',                   surface: 'Bbox' },
+  { id: 'bbox-scale',       keyGroups: [[']'], ['[']],                      description: 'Grow / shrink bbox',               surface: 'Bbox' },
+  { id: 'bbox-scale-shift', keyGroups: [['Shift', [']', '[']]],             description: 'Grow / shrink bbox (larger step)', surface: 'Bbox' },
+  { id: 'bbox-constrain',   keyGroups: [['Shift']],               description: 'Axis / square constraint (drag)',  surface: 'Bbox' },
 
   // ── Help ─────────────────────────────────────────────────────────────
   {
     id: 'toggle-help',
-    keys: ['?'],
+    keyGroups: [['?']],
     description: 'Toggle keyboard shortcuts panel',
     surface: 'Help',
   },

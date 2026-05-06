@@ -166,9 +166,9 @@ describe('useKeyboardShortcuts – Space play/pause', () => {
   }
 });
 
-// ── , / . — frame step ────────────────────────────────────────────────────────
+// ── , / . — second step ───────────────────────────────────────────────────────
 
-describe('useKeyboardShortcuts – frame step', () => {
+describe('useKeyboardShortcuts – second step', () => {
   let mockVideo: Partial<HTMLVideoElement>;
 
   beforeEach(() => {
@@ -185,40 +185,69 @@ describe('useKeyboardShortcuts – frame step', () => {
     });
   });
 
-  it(', steps back one frame', () => {
+  it(', steps back one second', () => {
     const ref = { current: mockVideo as HTMLVideoElement };
     function Inner() { useKeyboardShortcuts(); return null; }
     const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
     fireKey(',');
-    expect(mockVideo.currentTime).toBeCloseTo(2.0 - 1 / 30, 5);
+    expect(mockVideo.currentTime).toBe(1.0);
     unmount();
   });
 
-  it('. steps forward one frame', () => {
+  it('. steps forward one second', () => {
     const ref = { current: mockVideo as HTMLVideoElement };
     function Inner() { useKeyboardShortcuts(); return null; }
     const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
     fireKey('.');
-    expect(mockVideo.currentTime).toBeCloseTo(2.0 + 1 / 30, 5);
+    expect(mockVideo.currentTime).toBe(3.0);
     unmount();
   });
 
-  it(', is a no-op when videoMetadata is null', () => {
+  it(', still works when videoMetadata is null (no fps dependency)', () => {
     useAppStore.setState({ videoMetadata: null });
     const ref = { current: mockVideo as HTMLVideoElement };
     function Inner() { useKeyboardShortcuts(); return null; }
     const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
     fireKey(',');
-    expect(mockVideo.currentTime).toBe(2.0); // unchanged
+    expect(mockVideo.currentTime).toBe(1.0); // stepped back 1 second
     unmount();
   });
 
-  it('Shift+, does NOT trigger frame step', () => {
+  it(', is a no-op when videoRef is null', () => {
+    const ref = { current: null as unknown as HTMLVideoElement };
+    function Inner() { useKeyboardShortcuts(); return null; }
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey(',');
+    // No crash — no video element to operate on
+    unmount();
+  });
+
+  it(', clamps to 0 when currentTime is less than 1 second', () => {
+    mockVideo.currentTime = 0.5;
+    const ref = { current: mockVideo as HTMLVideoElement };
+    function Inner() { useKeyboardShortcuts(); return null; }
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey(',');
+    expect(mockVideo.currentTime).toBe(0);
+    unmount();
+  });
+
+  it('. clamps to video.duration when near the end', () => {
+    mockVideo.currentTime = 59.8;
+    const ref = { current: mockVideo as HTMLVideoElement };
+    function Inner() { useKeyboardShortcuts(); return null; }
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('.');
+    expect(mockVideo.currentTime).toBe(60);
+    unmount();
+  });
+
+  it('Shift+, does NOT trigger second step', () => {
     const ref = { current: mockVideo as HTMLVideoElement };
     function Inner() { useKeyboardShortcuts(); return null; }
     const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
     fireCode('Comma', ',', { shiftKey: true });
-    expect(mockVideo.currentTime).toBe(2.0); // unchanged — speed changed, not frame stepped
+    expect(mockVideo.currentTime).toBe(2.0); // unchanged — speed changed, not second stepped
     unmount();
   });
 });
@@ -583,5 +612,330 @@ describe('useAppStore – new store fields', () => {
     useAppStore.getState().resetTimelineZoom();
     expect(useAppStore.getState().timelineZoom).toBe(1);
     expect(useAppStore.getState().timelineZoomOffset).toBe(0);
+  });
+});
+
+// ── Arrow keys — live bbox movement ──────────────────────────────────────────
+
+describe('useKeyboardShortcuts – arrow keys (live bbox movement)', () => {
+  const VIDEO_META = { id: 'v', name: 'test.mp4', width: 1920, height: 1080, fps: 30, duration: 60, url: '' };
+  const INITIAL_RECT = { x: 100, y: 100, width: 400, height: 300 };
+
+  beforeEach(() => {
+    useAppStore.setState({
+      mode: 'edit',
+      viewportRect: { ...INITIAL_RECT },
+      videoMetadata: VIDEO_META,
+      recordingState: 'idle',
+      currentTime: 5,
+      tracks: [{ id: 'track_default', videoId: '', name: 'clip-1', keyframes: [], range: { inTime: 0, outTime: 60 }, isDirty: false }],
+      activeTrackId: 'track_default',
+    });
+  });
+
+  function Inner() { useKeyboardShortcuts(); return null; }
+  const ref = { current: null as unknown as HTMLVideoElement };
+
+  it('ArrowLeft moves bbox 1px left', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowLeft');
+    expect(useAppStore.getState().viewportRect?.x).toBe(99);
+    expect(useAppStore.getState().viewportRect?.y).toBe(100);
+    expect(useAppStore.getState().viewportRect?.width).toBe(400);
+    expect(useAppStore.getState().viewportRect?.height).toBe(300);
+    unmount();
+  });
+
+  it('ArrowRight moves bbox 1px right', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowRight');
+    expect(useAppStore.getState().viewportRect?.x).toBe(101);
+    unmount();
+  });
+
+  it('ArrowUp moves bbox 1px up', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowUp');
+    expect(useAppStore.getState().viewportRect?.y).toBe(99);
+    unmount();
+  });
+
+  it('ArrowDown moves bbox 1px down', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowDown');
+    expect(useAppStore.getState().viewportRect?.y).toBe(101);
+    unmount();
+  });
+
+  it('Shift+ArrowLeft moves bbox 10px left', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowLeft', { shiftKey: true });
+    expect(useAppStore.getState().viewportRect?.x).toBe(90);
+    unmount();
+  });
+
+  it('Shift+ArrowDown moves bbox 10px down', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowDown', { shiftKey: true });
+    expect(useAppStore.getState().viewportRect?.y).toBe(110);
+    unmount();
+  });
+
+  it('ArrowLeft clamps at x=0', () => {
+    useAppStore.setState({ viewportRect: { x: 0, y: 100, width: 400, height: 300 } });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowLeft');
+    // x was already 0, no change → no-op (rect identical)
+    expect(useAppStore.getState().viewportRect?.x).toBe(0);
+    unmount();
+  });
+
+  it('ArrowRight clamps at x = videoWidth - width', () => {
+    useAppStore.setState({ viewportRect: { x: 1920 - 400, y: 100, width: 400, height: 300 } });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowRight');
+    expect(useAppStore.getState().viewportRect?.x).toBe(1920 - 400);
+    unmount();
+  });
+
+  it('ArrowLeft at edge is a no-op (does not write keyframe during recording)', () => {
+    useAppStore.setState({
+      viewportRect: { x: 0, y: 100, width: 400, height: 300 },
+      recordingState: 'recording',
+    });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    const kfsBefore = useAppStore.getState().tracks[0].keyframes.length;
+    fireKey('ArrowLeft');
+    expect(useAppStore.getState().tracks[0].keyframes.length).toBe(kfsBefore);
+    unmount();
+  });
+
+  it('is a no-op when viewportRect is null', () => {
+    useAppStore.setState({ viewportRect: null });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowLeft');
+    expect(useAppStore.getState().viewportRect).toBeNull();
+    unmount();
+  });
+
+  it('is a no-op when videoMetadata is null', () => {
+    useAppStore.setState({ videoMetadata: null });
+    const before = { ...useAppStore.getState().viewportRect };
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowLeft');
+    const after = useAppStore.getState().viewportRect;
+    expect(after?.x).toBe(before.x);
+    unmount();
+  });
+
+  it('is a no-op in view mode', () => {
+    useAppStore.setState({ mode: 'view' });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowLeft');
+    // In view mode, mode gate blocks edit-only shortcuts
+    expect(useAppStore.getState().viewportRect?.x).toBe(100);
+    unmount();
+  });
+
+  it('Ctrl+ArrowLeft is a no-op', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowLeft', { ctrlKey: true });
+    expect(useAppStore.getState().viewportRect?.x).toBe(100);
+    unmount();
+  });
+
+  it('during recording, arrow move writes keyframe at current playhead', () => {
+    useAppStore.setState({ recordingState: 'recording' });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowRight');
+    const kfs = useAppStore.getState().tracks[0].keyframes;
+    expect(kfs.length).toBeGreaterThan(0);
+    const written = kfs.find((kf) => Math.abs(kf.time - 5) < 0.1);
+    expect(written).toBeDefined();
+    expect(written?.sourceRect.x).toBe(101);
+    unmount();
+  });
+
+  it('during paused recording, arrow move writes keyframe at current playhead', () => {
+    useAppStore.setState({ recordingState: 'paused' });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowDown');
+    const kfs = useAppStore.getState().tracks[0].keyframes;
+    expect(kfs.length).toBeGreaterThan(0);
+    const written = kfs.find((kf) => Math.abs(kf.time - 5) < 0.1);
+    expect(written).toBeDefined();
+    expect(written?.sourceRect.y).toBe(101);
+    unmount();
+  });
+
+  it('when idle, arrow move does NOT write keyframe', () => {
+    // recordingState is 'idle' in beforeEach
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireKey('ArrowRight');
+    expect(useAppStore.getState().tracks[0].keyframes.length).toBe(0);
+    unmount();
+  });
+});
+
+// ── [ / ] — bbox scale ────────────────────────────────────────────────────────
+
+describe('useKeyboardShortcuts – [ / ] bbox scale', () => {
+  const VIDEO_META = { id: 'v', name: 'test.mp4', width: 1920, height: 1080, fps: 30, duration: 60, url: '' };
+  // Center rect: 960x540 centered at (480, 270)
+  const CENTER_RECT = { x: 480, y: 270, width: 960, height: 540 };
+
+  beforeEach(() => {
+    useAppStore.setState({
+      mode: 'edit',
+      viewportRect: { ...CENTER_RECT },
+      videoMetadata: VIDEO_META,
+      recordingState: 'idle',
+      currentTime: 3,
+      tracks: [{ id: 'track_default', videoId: '', name: 'clip-1', keyframes: [], range: { inTime: 0, outTime: 60 }, isDirty: false }],
+      activeTrackId: 'track_default',
+    });
+  });
+
+  function Inner() { useKeyboardShortcuts(); return null; }
+  const ref = { current: null as unknown as HTMLVideoElement };
+
+  it('] grows bbox by 1.1× (uniform)', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']');
+    const rect = useAppStore.getState().viewportRect!;
+    expect(rect.width).toBeCloseTo(960 * 1.1, 4);
+    expect(rect.height).toBeCloseTo(540 * 1.1, 4);
+    // Aspect ratio preserved
+    expect(rect.width / rect.height).toBeCloseTo(960 / 540, 4);
+    unmount();
+  });
+
+  it('[ shrinks bbox by 1/1.1× (uniform)', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketLeft', '[');
+    const rect = useAppStore.getState().viewportRect!;
+    expect(rect.width).toBeCloseTo(960 / 1.1, 4);
+    expect(rect.height).toBeCloseTo(540 / 1.1, 4);
+    unmount();
+  });
+
+  it('Shift+] grows bbox by 1.25×', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']', { shiftKey: true });
+    const rect = useAppStore.getState().viewportRect!;
+    expect(rect.width).toBeCloseTo(960 * 1.25, 4);
+    expect(rect.height).toBeCloseTo(540 * 1.25, 4);
+    unmount();
+  });
+
+  it('Shift+[ shrinks bbox by 1/1.25×', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketLeft', '[', { shiftKey: true });
+    const rect = useAppStore.getState().viewportRect!;
+    expect(rect.width).toBeCloseTo(960 / 1.25, 4);
+    expect(rect.height).toBeCloseTo(540 / 1.25, 4);
+    unmount();
+  });
+
+  it('] scales around the original center', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']');
+    const rect = useAppStore.getState().viewportRect!;
+    const newCenterX = rect.x + rect.width / 2;
+    const newCenterY = rect.y + rect.height / 2;
+    // Original center: 480 + 960/2 = 960, 270 + 540/2 = 540
+    expect(newCenterX).toBeCloseTo(960, 1);
+    expect(newCenterY).toBeCloseTo(540, 1);
+    unmount();
+  });
+
+  it('] clamps at videoWidth/videoHeight max (no-op when already at max)', () => {
+    // Full-sized rect: already at 100%
+    useAppStore.setState({ viewportRect: { x: 0, y: 0, width: 1920, height: 1080 } });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    const before = { ...useAppStore.getState().viewportRect };
+    fireCode('BracketRight', ']');
+    const after = useAppStore.getState().viewportRect!;
+    expect(after.width).toBe(before.width);
+    expect(after.height).toBe(before.height);
+    unmount();
+  });
+
+  it('[ clamps at 10% minimum (no-op when at min)', () => {
+    // 10%-sized rect: width = 192, height = 108
+    useAppStore.setState({ viewportRect: { x: 0, y: 0, width: 192, height: 108 } });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    const before = { ...useAppStore.getState().viewportRect };
+    fireCode('BracketLeft', '[');
+    const after = useAppStore.getState().viewportRect!;
+    expect(after.width).toBeCloseTo(before.width!, 1);
+    expect(after.height).toBeCloseTo(before.height!, 1);
+    unmount();
+  });
+
+  it('is a no-op when viewportRect is null', () => {
+    useAppStore.setState({ viewportRect: null });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']');
+    expect(useAppStore.getState().viewportRect).toBeNull();
+    unmount();
+  });
+
+  it('is a no-op when videoMetadata is null', () => {
+    useAppStore.setState({ videoMetadata: null });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']');
+    // No crash; viewportRect still set (from beforeEach) but should not have changed
+    const rect = useAppStore.getState().viewportRect;
+    // The hook no-ops before setViewportRect — check via a spy or just confirm no crash
+    expect(rect).not.toBeNull();
+    unmount();
+  });
+
+  it('is a no-op in view mode', () => {
+    useAppStore.setState({ mode: 'view' });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']');
+    expect(useAppStore.getState().viewportRect?.width).toBe(960);
+    unmount();
+  });
+
+  it('Ctrl+] is a no-op', () => {
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']', { ctrlKey: true });
+    expect(useAppStore.getState().viewportRect?.width).toBe(960);
+    unmount();
+  });
+
+  it('during recording, ] scale writes keyframe at current playhead', () => {
+    useAppStore.setState({ recordingState: 'recording' });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']');
+    const kfs = useAppStore.getState().tracks[0].keyframes;
+    expect(kfs.length).toBeGreaterThan(0);
+    const written = kfs.find((kf) => Math.abs(kf.time - 3) < 0.1);
+    expect(written).toBeDefined();
+    expect(written?.sourceRect.width).toBeCloseTo(960 * 1.1, 2);
+    unmount();
+  });
+
+  it('during paused recording, [ scale writes keyframe at current playhead', () => {
+    useAppStore.setState({ recordingState: 'paused' });
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketLeft', '[');
+    const kfs = useAppStore.getState().tracks[0].keyframes;
+    expect(kfs.length).toBeGreaterThan(0);
+    const written = kfs.find((kf) => Math.abs(kf.time - 3) < 0.1);
+    expect(written).toBeDefined();
+    expect(written?.sourceRect.width).toBeCloseTo(960 / 1.1, 2);
+    unmount();
+  });
+
+  it('when idle, ] scale does NOT write keyframe', () => {
+    // recordingState is 'idle' in beforeEach
+    const { unmount } = render(<VideoRefProvider value={ref}><Inner /></VideoRefProvider>);
+    fireCode('BracketRight', ']');
+    expect(useAppStore.getState().tracks[0].keyframes.length).toBe(0);
+    unmount();
   });
 });
