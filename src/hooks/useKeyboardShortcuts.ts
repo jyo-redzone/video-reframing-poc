@@ -81,26 +81,28 @@ export default function useKeyboardShortcuts(): void {
 
       // , — step 1 second back (always-on, unshifted only)
       if (e.key === ',' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const { setIsPlaying, setCurrentTime, isPlaying } = useAppStore.getState();
+        const { setIsPlaying, setCurrentTime, isPlaying, setTimelineFollowPaused } = useAppStore.getState();
         const video = videoRef.current;
         if (!video) return;
         if (isPlaying) { video.pause(); setIsPlaying(false); }
         const newTime = Math.max(0, video.currentTime - 1);
         video.currentTime = newTime;
         setCurrentTime(newTime);
+        setTimelineFollowPaused(false);
         e.preventDefault();
         return;
       }
 
       // . — step 1 second forward (always-on, unshifted only)
       if (e.key === '.' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const { setIsPlaying, setCurrentTime, isPlaying } = useAppStore.getState();
+        const { setIsPlaying, setCurrentTime, isPlaying, setTimelineFollowPaused } = useAppStore.getState();
         const video = videoRef.current;
         if (!video) return;
         if (isPlaying) { video.pause(); setIsPlaying(false); }
         const newTime = Math.min(video.duration || Infinity, video.currentTime + 1);
         video.currentTime = newTime;
         setCurrentTime(newTime);
+        setTimelineFollowPaused(false);
         e.preventDefault();
         return;
       }
@@ -140,26 +142,37 @@ export default function useKeyboardShortcuts(): void {
 
       // Home — seek to clip in-point (always-on)
       if (e.code === 'Home' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const { tracks, activeTrackId, setCurrentTime } = useAppStore.getState();
+        const { tracks, activeTrackId, setCurrentTime, setTimelineFollowPaused } = useAppStore.getState();
         const activeTrack = tracks.find((t) => t.id === activeTrackId);
         if (!activeTrack) return;
         const video = videoRef.current;
         const seekTime = activeTrack.range.inTime;
         if (video) video.currentTime = seekTime;
         setCurrentTime(seekTime);
+        setTimelineFollowPaused(false);
         e.preventDefault();
         return;
       }
 
       // End — seek to clip out-point (always-on)
       if (e.code === 'End' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const { tracks, activeTrackId, setCurrentTime } = useAppStore.getState();
+        const { tracks, activeTrackId, setCurrentTime, setTimelineFollowPaused } = useAppStore.getState();
         const activeTrack = tracks.find((t) => t.id === activeTrackId);
         if (!activeTrack) return;
         const video = videoRef.current;
         const seekTime = activeTrack.range.outTime;
         if (video) video.currentTime = seekTime;
         setCurrentTime(seekTime);
+        setTimelineFollowPaused(false);
+        e.preventDefault();
+        return;
+      }
+
+      // M — toggle mode (edit ↔ view). Always-on; the store guards against
+      // switching while a recording is active.
+      if ((e.key === 'm' || e.key === 'M') && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const { mode, setMode } = useAppStore.getState();
+        setMode(mode === 'edit' ? 'view' : 'edit');
         e.preventDefault();
         return;
       }

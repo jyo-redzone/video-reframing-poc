@@ -35,6 +35,9 @@ type AppState = {
   // Timeline zoom
   timelineZoom: number;
   timelineZoomOffset: number;
+  // When true, suspend auto-follow of the playhead (user has manually panned).
+  // Cleared automatically when the playhead re-enters view, or by explicit seeks.
+  timelineFollowPaused: boolean;
 };
 
 type AppActions = {
@@ -95,6 +98,7 @@ type AppActions = {
   setTimelineZoom: (zoom: number) => void;
   setTimelineZoomOffset: (offset: number) => void;
   resetTimelineZoom: () => void;
+  setTimelineFollowPaused: (paused: boolean) => void;
 };
 
 const sortByTime = (keyframes: Keyframe[]): Keyframe[] =>
@@ -115,6 +119,7 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   playbackRate: 1,
   timelineZoom: 1,
   timelineZoomOffset: 0,
+  timelineFollowPaused: false,
 
   // ── Video ──────────────────────────────────────────────────────────
   setVideoUrl: (url) => set({ videoUrl: url }),
@@ -430,6 +435,7 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   setTimelineZoom: (zoom) => set({ timelineZoom: Math.max(1, Math.min(256, zoom)) }),
   setTimelineZoomOffset: (offset) => set({ timelineZoomOffset: offset }),
   resetTimelineZoom: () => set({ timelineZoom: 1, timelineZoomOffset: 0 }),
+  setTimelineFollowPaused: (paused) => set({ timelineFollowPaused: paused }),
 
 }));
 

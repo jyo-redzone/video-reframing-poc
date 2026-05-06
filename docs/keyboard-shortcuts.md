@@ -27,6 +27,7 @@ This document is the source of truth for the agreed shortcut map. Implementation
 | `Shift+.` | Cycle playback speed up | Same list. |
 | `R` | Record toggle | Context-aware: idle → recording, recording → paused, paused → recording. Edit mode only. Disabled when no active track or no viewport rect. |
 | `Shift+R` | Stop recording | Works from both recording and paused states; commits the session. |
+| `M` | Toggle mode (edit ↔ view) | Always available. Refused while recording is active. |
 
 ---
 
@@ -71,6 +72,7 @@ This document is the source of truth for the agreed shortcut map. Implementation
 | `Shift+.` | Speed up | Player |
 | `R` | Record toggle | Player |
 | `Shift+R` | Stop recording | Player |
+| `M` | Toggle mode (edit ↔ view) | Global |
 | `=` | Timeline zoom in | Timeline |
 | `-` | Timeline zoom out | Timeline |
 | `0` | Timeline zoom reset | Timeline |

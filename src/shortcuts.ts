@@ -45,6 +45,12 @@ export const SHORTCUTS: Shortcut[] = [
     description: 'Stop recording',
     surface: 'Player',
   },
+  {
+    id: 'mode-toggle',
+    keyGroups: [['M']],
+    description: 'Toggle mode (edit / view)',
+    surface: 'Player',
+  },
 
   // ── Timeline ─────────────────────────────────────────────────────────
   {

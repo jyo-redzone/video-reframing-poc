@@ -233,10 +233,29 @@ export default function TimelineBar() {
       const { visibleDuration: vd, duration: dur, zoomOffset: currentOffset } = dragParamsRef.current;
       const timeShift = (delta / 300) * vd;
       setZoomOffset(Math.max(0, Math.min(dur - vd, currentOffset + timeShift)));
+      useAppStore.getState().setTimelineFollowPaused(true);
     };
     svg.addEventListener('wheel', handleWheel, { passive: false });
     return () => svg.removeEventListener('wheel', handleWheel);
   }, [zoomLevel, visibleDuration, duration]);
+
+  // Auto-follow: keep the playhead inside the visible window when zoomed.
+  // Keyed only on currentTime so manual scrolling is preserved until the
+  // playhead naturally re-enters the window or until an explicit seek clears
+  // the timelineFollowPaused flag.
+  useEffect(() => {
+    const { visibleStart: vs, visibleDuration: vd, duration: dur } = dragParamsRef.current;
+    if (vd >= dur) return;
+    const inView = currentTime >= vs && currentTime <= vs + vd;
+    const { timelineFollowPaused, setTimelineFollowPaused } = useAppStore.getState();
+    if (inView) {
+      if (timelineFollowPaused) setTimelineFollowPaused(false);
+      return;
+    }
+    if (timelineFollowPaused) return;
+    setZoomOffset(Math.max(0, Math.min(dur - vd, currentTime - vd * 0.1)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTime]);
 
   // Escape key closes the picker; attached only while picker is open
   useEffect(() => {
@@ -514,6 +533,7 @@ export default function TimelineBar() {
         <div
           className="mx-2 mb-1 h-1.5 rounded-full bg-white/5"
           onMouseDown={(e) => {
+            useAppStore.getState().setTimelineFollowPaused(true);
             const trackEl = e.currentTarget;
             const trackRect = trackEl.getBoundingClientRect();
             const thumbWidthPx = (visibleDuration / duration) * trackRect.width;
