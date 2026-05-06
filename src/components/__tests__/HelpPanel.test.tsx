@@ -4,8 +4,8 @@ import HelpPanel from '../HelpPanel';
 import { SHORTCUTS } from '../../shortcuts';
 
 describe('HelpPanel', () => {
-  it('renders 17 shortcut rows (one per consolidated entry)', () => {
-    expect(SHORTCUTS).toHaveLength(17);
+  it('renders 18 shortcut rows (one per consolidated entry)', () => {
+    expect(SHORTCUTS).toHaveLength(18);
   });
 
   it('renders a row for every shortcut description', () => {

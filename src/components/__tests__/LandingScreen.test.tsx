@@ -46,9 +46,9 @@ describe('LandingScreen', () => {
     expect(useAppStore.getState().videoMetadata?.fps).toBe(60);
   });
 
-  it('FPS defaults to 29.97', () => {
+  it('FPS defaults to 25', () => {
     render(<LandingScreen />);
     const fpsInput = screen.getByLabelText(/frames per second/i) as HTMLInputElement;
-    expect(parseFloat(fpsInput.value)).toBeCloseTo(29.97);
+    expect(parseFloat(fpsInput.value)).toBe(25);
   });
 });

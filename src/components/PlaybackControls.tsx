@@ -1,5 +1,6 @@
 import useAppStore from '../store/useAppStore';
 import { useVideoRef } from './VideoRefContext';
+import { useHlsControl } from './HlsControlContext';
 import { SPEED_OPTIONS } from '../constants';
 
 export default function PlaybackControls() {
@@ -17,6 +18,16 @@ export default function PlaybackControls() {
   const stopRecording = useAppStore((s) => s.stopRecording);
   const playbackRate = useAppStore((s) => s.playbackRate);
   const setPlaybackRate = useAppStore((s) => s.setPlaybackRate);
+  const { levels, currentLevel, setLevel } = useHlsControl();
+  const sortedLevels = [...levels].sort((a, b) => b.height - a.height);
+  const showQuality = sortedLevels.length > 1;
+
+  const formatQualityLabel = (height: number, bitrate: number): string => {
+    if (height >= 4320) return '8K';
+    if (height >= 2160) return '4K';
+    if (height > 0) return `${height}p`;
+    return `${Math.round(bitrate / 1000)}k`;
+  };
 
   const handlePlayPause = () => {
     const video = videoRef.current;
@@ -58,8 +69,8 @@ export default function PlaybackControls() {
     'rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (
-    <div className="flex items-center justify-center gap-1">
-      {/* Transport controls */}
+    <div className="relative flex items-center justify-center gap-1">
+      {/* Transport controls — kept centered regardless of REC group width */}
       <button
         className="rounded-default px-3 py-1.5 text-sm text-text-primary hover:bg-white/10"
         title="Prev second"
@@ -93,12 +104,26 @@ export default function PlaybackControls() {
         ))}
       </select>
 
-      {/* REC controls — only in edit mode */}
-      {mode === 'edit' && (
-        <>
-          {/* Vertical divider */}
-          <div className="mx-2 h-5 w-px bg-white/20" aria-hidden="true" />
+      {showQuality && (
+        <select
+          value={currentLevel}
+          onChange={(e) => setLevel(parseInt(e.target.value, 10))}
+          className="ml-1 cursor-pointer rounded-default border border-border-subtle bg-surface-raised px-2 py-1 text-xs text-text-primary outline-none"
+          style={{ colorScheme: 'dark' }}
+          title="Stream quality"
+        >
+          <option value={-1}>Auto</option>
+          {sortedLevels.map((l) => (
+            <option key={l.index} value={l.index}>
+              {formatQualityLabel(l.height, l.bitrate)}
+            </option>
+          ))}
+        </select>
+      )}
 
+      {/* REC controls — anchored right, edit mode only */}
+      {mode === 'edit' && (
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {recordingState === 'idle' && (() => {
             const noTrack = activeTrackId === '';
             const noBox = viewportRect === null;
@@ -121,7 +146,7 @@ export default function PlaybackControls() {
           })()}
 
           {recordingState !== 'idle' && (
-            <div className="flex items-center gap-1">
+            <>
               {/* Red dot: pulsing when recording, steady when paused */}
               <span
                 className={`inline-block h-2.5 w-2.5 rounded-full bg-red-500${recordingState === 'recording' ? ' animate-pulse' : ''}`}
@@ -156,9 +181,9 @@ export default function PlaybackControls() {
               >
                 ⏹ Stop
               </button>
-            </div>
+            </>
           )}
-        </>
+        </div>
       )}
     </div>
   );

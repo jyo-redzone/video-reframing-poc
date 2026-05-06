@@ -3,7 +3,7 @@ import useAppStore from '../store/useAppStore';
 
 export default function LandingScreen() {
   const [url, setUrl] = useState('');
-  const [fps, setFps] = useState<number>(29.97);
+  const [fps, setFps] = useState<number>(25);
   const setVideoUrl = useAppStore((s) => s.setVideoUrl);
   const setVideoMetadata = useAppStore((s) => s.setVideoMetadata);
 
