@@ -6,16 +6,25 @@ const INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 export default function useKeyboardShortcuts(): void {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only act in edit mode
-      const state = useAppStore.getState();
-      if (state.mode !== 'edit') return;
-
-      // Don't intercept when focus is inside a text input / editable element
+      // Don't intercept when focus is inside a text input / editable element.
+      // This guard applies to ALL branches below, including the global ? toggle.
       const active = document.activeElement;
       if (active) {
         if (INPUT_TAGS.has(active.tagName)) return;
         if (active.getAttribute('contenteditable') !== null) return;
       }
+
+      // ── Global shortcuts (work in both edit and view modes) ──────────
+      // ? (Shift+/) — toggle help panel. Must run before the mode gate.
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        useAppStore.getState().toggleHelpPanel();
+        e.preventDefault();
+        return;
+      }
+
+      // Only act in edit mode for all other shortcuts
+      const state = useAppStore.getState();
+      if (state.mode !== 'edit') return;
 
       const isArrow =
         e.key === 'ArrowUp' ||

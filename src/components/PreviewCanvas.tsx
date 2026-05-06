@@ -59,6 +59,22 @@ export default function PreviewCanvas({ containerRef }: PreviewCanvasProps) {
         const bounds = { width: videoMetadata.width, height: videoMetadata.height };
         const { sourceRect } = resolve(currentTime, keyframes, bounds, videoMetadata.fps);
 
+        // Object-contain: fit the cropped source into the canvas without distorting
+        // its aspect ratio, letterbox/pillarbox to match the underlying <video>.
+        const srcAR = sourceRect.width / sourceRect.height;
+        const dstAR = canvas.width / canvas.height;
+        let dw: number;
+        let dh: number;
+        if (srcAR > dstAR) {
+          dw = canvas.width;
+          dh = canvas.width / srcAR;
+        } else {
+          dh = canvas.height;
+          dw = canvas.height * srcAR;
+        }
+        const dx = (canvas.width - dw) / 2;
+        const dy = (canvas.height - dh) / 2;
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(
           video,
@@ -66,10 +82,10 @@ export default function PreviewCanvas({ containerRef }: PreviewCanvasProps) {
           sourceRect.y,
           sourceRect.width,
           sourceRect.height,
-          0,
-          0,
-          canvas.width,
-          canvas.height,
+          dx,
+          dy,
+          dw,
+          dh,
         );
       }
 

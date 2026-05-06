@@ -56,4 +56,10 @@
     backdrop-filter: blur(10px);
     background: rgba(0, 0, 0, 0.6);
   }
+
+  /* Material Icons inherit parent font-size instead of forcing 24px */
+  .material-icons,
+  .material-symbols-outlined {
+    font-size: inherit !important;
+  }
 }

@@ -25,6 +25,8 @@ type AppState = {
   // Viewport
   viewportRect: SourceRect | null;
 
+  // Help panel
+  helpPanelOpen: boolean;
 };
 
 type AppActions = {
@@ -73,6 +75,9 @@ type AppActions = {
   // Viewport
   setViewportRect: (rect: SourceRect | null) => void;
 
+  // Help panel
+  toggleHelpPanel: () => void;
+  setHelpPanelOpen: (open: boolean) => void;
 };
 
 const sortByTime = (keyframes: Keyframe[]): Keyframe[] =>
@@ -88,6 +93,7 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
   currentTime: 0,
   isPlaying: false,
   viewportRect: null,
+  helpPanelOpen: false,
 
   // ── Video ──────────────────────────────────────────────────────────
   setVideoMetadata: (meta) =>
@@ -384,6 +390,10 @@ const useAppStore = create<AppState & AppActions>()((set, get) => ({
 
   // ── Viewport ───────────────────────────────────────────────────────
   setViewportRect: (rect) => set({ viewportRect: rect }),
+
+  // ── Help panel ─────────────────────────────────────────────────────
+  toggleHelpPanel: () => set((state) => ({ helpPanelOpen: !state.helpPanelOpen })),
+  setHelpPanelOpen: (open) => set({ helpPanelOpen: open }),
 
 }));
 

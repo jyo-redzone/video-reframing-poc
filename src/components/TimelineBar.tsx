@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import useAppStore from '../store/useAppStore';
-import { deriveSegments } from '../engine/cre';
+import { deriveSegments, resolve } from '../engine/cre';
 import { useVideoRef } from './VideoRefContext';
+import type { Keyframe, ClipRange } from '../types';
 
 const TL_X0 = 40;
 const TL_X1 = 960;
 const TL_Y = 35;
+
+// Hoisted to module scope so selector fallbacks return stable references — inline literals trigger useSyncExternalStore infinite loops.
+const EMPTY_KEYFRAMES: Keyframe[] = [];
+const EMPTY_RANGE: ClipRange = { inTime: 0, outTime: 0 };
 
 // Drag-state discriminated union
 type DragState =
@@ -13,8 +18,8 @@ type DragState =
   | { type: 'create-range'; startTime: number; currentTime: number }
   | { type: 'resize-handle'; side: 'in' | 'out'; otherEdgeTime: number };
 
-// Picker state: which segment was clicked and where the popover should appear
-type PickerState = { startKfId: string; clientX: number } | null;
+// Picker state: which segment was clicked. Popover X is derived from the segment center.
+type PickerState = { startKfId: string } | null;
 
 function formatTimecode(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -50,10 +55,10 @@ export default function TimelineBar() {
   const currentTime = useAppStore((s) => s.currentTime);
   const videoMetadata = useAppStore((s) => s.videoMetadata);
   const keyframes = useAppStore(
-    (s) => s.tracks.find((t) => t.id === s.activeTrackId)?.keyframes ?? [],
+    (s) => s.tracks.find((t) => t.id === s.activeTrackId)?.keyframes ?? EMPTY_KEYFRAMES,
   );
   const trackRange = useAppStore(
-    (s) => s.tracks.find((t) => t.id === s.activeTrackId)?.range ?? { inTime: 0, outTime: 0 },
+    (s) => s.tracks.find((t) => t.id === s.activeTrackId)?.range ?? EMPTY_RANGE,
   );
   const duration = videoMetadata?.duration ?? 60;
   const setCurrentTime = useAppStore((s) => s.setCurrentTime);
@@ -173,10 +178,23 @@ export default function TimelineBar() {
         if (!prev) return null;
 
         if (prev.type === 'pending') {
-          // Short click — seek to the pressed time
+          // Short click — seek to the pressed time and sync viewport to the
+          // CRE-resolved rect at that moment so the framing box reflects the
+          // interpolated position, not the last user-set rect.
           const time = prev.startTime;
           if (videoRef.current) videoRef.current.currentTime = time;
           setCurrentTime(time);
+          const { tracks, activeTrackId, videoMetadata: meta } = useAppStore.getState();
+          const kfs = tracks.find((t) => t.id === activeTrackId)?.keyframes ?? [];
+          if (meta && kfs.length > 0) {
+            const { sourceRect } = resolve(
+              time,
+              kfs,
+              { width: meta.width, height: meta.height },
+              meta.fps,
+            );
+            setViewportRect(sourceRect);
+          }
         } else if (prev.type === 'create-range') {
           setTrackRange(prev.startTime, prev.currentTime);
         }
@@ -196,7 +214,7 @@ export default function TimelineBar() {
   }, [isDragging]);
 
   const handleZoomIn = () => {
-    if (zoomLevel >= 16) return;
+    if (zoomLevel >= 256) return;
     const newZoom = zoomLevel * 2;
     const newVisible = duration / newZoom;
     setZoomOffset(Math.max(0, Math.min(duration - newVisible, currentTime - newVisible / 2)));
@@ -288,12 +306,27 @@ export default function TimelineBar() {
   const handleInX = xFor(trackRange.inTime);
   const handleOutX = xFor(trackRange.outTime);
 
-  // Popover left position, clamped to keep it within the wrapper width
+  // Popover X is anchored to the active segment's pixel center, clamped to wrapper width.
+  const POPOVER_WIDTH = 200;
   const popoverLeft = (() => {
     if (!pickerState || !wrapperRef.current) return 0;
-    const rect = wrapperRef.current.getBoundingClientRect();
-    const raw = pickerState.clientX - rect.left;
-    return Math.max(0, Math.min(raw, (wrapperRef.current.offsetWidth ?? 200) - 120));
+    const seg = segments.find((s) => s.startKeyframe.id === pickerState.startKfId);
+    if (!seg) return 0;
+    const wrapperW = wrapperRef.current.offsetWidth ?? 200;
+    const segCenterTime = (seg.startTime + seg.endTime) / 2;
+    const segCenterViewbox = xFor(segCenterTime);
+    const segCenterPx = (segCenterViewbox / 1000) * wrapperW;
+    return Math.max(4, Math.min(segCenterPx - POPOVER_WIDTH / 2, wrapperW - POPOVER_WIDTH - 4));
+  })();
+  // Where to anchor the chevron tip (segment center, in the popover's local coord space).
+  const popoverArrowLeft = (() => {
+    if (!pickerState || !wrapperRef.current) return POPOVER_WIDTH / 2;
+    const seg = segments.find((s) => s.startKeyframe.id === pickerState.startKfId);
+    if (!seg) return POPOVER_WIDTH / 2;
+    const wrapperW = wrapperRef.current.offsetWidth ?? 200;
+    const segCenterTime = (seg.startTime + seg.endTime) / 2;
+    const segCenterPx = (xFor(segCenterTime) / 1000) * wrapperW;
+    return Math.max(8, Math.min(segCenterPx - popoverLeft, POPOVER_WIDTH - 8));
   })();
 
   return (
@@ -312,7 +345,7 @@ export default function TimelineBar() {
         <span className="w-7 text-center text-xs tabular-nums text-text-disabled">{zoomLevel}×</span>
         <button
           onClick={handleZoomIn}
-          disabled={zoomLevel >= 16}
+          disabled={zoomLevel >= 256}
           className="rounded px-1.5 py-0.5 text-base leading-none text-text-secondary hover:bg-white/10 disabled:opacity-30"
           title="Zoom in"
         >
@@ -369,24 +402,30 @@ export default function TimelineBar() {
           const x2 = xFor(Math.min(seg.endTime, visibleEnd));
           const w = Math.max(2, x2 - x1);
           const segKey = `${seg.startKeyframe.id}|${seg.endKeyframe.id}`;
+          const segFill =
+            seg.transition === 'cut'
+              ? 'rgba(251, 146, 60, 0.45)' // orange = cut
+              : 'rgba(56, 189, 248, 0.45)'; // sky blue = smooth
+          const isActive = pickerState?.startKfId === seg.startKeyframe.id;
+          const isPickerOpen = pickerState !== null;
+          const segOpacity = isPickerOpen && !isActive ? 0.5 : 1;
           return (
             <g key={segKey}>
               <rect
                 x={x1} y={25} width={w} height={20} rx={2}
-                fill={seg.transition === 'cut' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.22)'}
+                fill={segFill}
+                opacity={segOpacity}
+                stroke={isActive ? 'rgba(255,255,255,0.85)' : 'none'}
+                strokeWidth={isActive ? 1.5 : 0}
                 cursor="pointer"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPickerState({
-                    startKfId: seg.startKeyframe.id,
-                    clientX: e.clientX,
-                  });
+                  setPickerState({ startKfId: seg.startKeyframe.id });
                 }}
-              />
-              <text x={x1 + w / 2} y={39} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.7)" pointerEvents="none">
-                {seg.transition}
-              </text>
+              >
+                <title>{seg.transition}</title>
+              </rect>
             </g>
           );
         })}
@@ -431,14 +470,16 @@ export default function TimelineBar() {
           </>
         )}
 
-        {/* 6. Keyframe diamonds */}
+        {/* 6. Keyframe dots */}
         {keyframes.map((kf) => {
           if (kf.time < visibleStart || kf.time > visibleEnd) return null;
           const cx = xFor(kf.time);
           return (
-            <polygon
+            <circle
               key={kf.id}
-              points={`${cx},${TL_Y - 10} ${cx - 5},${TL_Y} ${cx},${TL_Y + 10} ${cx + 5},${TL_Y}`}
+              cx={cx}
+              cy={TL_Y}
+              r={3}
               fill="#E4022C"
               cursor="pointer"
               onMouseDown={(e) => e.stopPropagation()}
@@ -475,38 +516,118 @@ export default function TimelineBar() {
         )}
       </svg>
 
-      {/* Transition picker popover — sits above the timeline bar */}
-      {pickerState && (
+      {/* Scrollbar — visible only when zoomed in */}
+      {zoomLevel > 1 && (
         <div
-          id="tl-transition-picker"
-          className="absolute z-20 flex gap-1 p-1 rounded border border-border-subtle bg-surface-raised shadow-lg"
-          style={{
-            left: popoverLeft,
-            bottom: 'calc(100% + 4px)',
+          className="mx-2 mb-1 h-1.5 rounded-full bg-white/5"
+          onMouseDown={(e) => {
+            const trackEl = e.currentTarget;
+            const trackRect = trackEl.getBoundingClientRect();
+            const thumbWidthPx = (visibleDuration / duration) * trackRect.width;
+            const halfThumb = thumbWidthPx / 2;
+            const seekFromClientX = (clientX: number) => {
+              const x = clientX - trackRect.left - halfThumb;
+              const ratio = Math.max(0, Math.min(x / (trackRect.width - thumbWidthPx), 1));
+              setZoomOffset(ratio * (duration - visibleDuration));
+            };
+            seekFromClientX(e.clientX);
+            const onMove = (ev: MouseEvent) => seekFromClientX(ev.clientX);
+            const onUp = () => {
+              window.removeEventListener('mousemove', onMove);
+              window.removeEventListener('mouseup', onUp);
+            };
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
           }}
         >
-          <button
-            className="px-2 py-1 text-xs rounded hover:bg-white/10 text-text-secondary"
-            tabIndex={-1}
-            onClick={() => {
-              setTransition(pickerState.startKfId, 'smooth');
-              setPickerState(null);
+          <div
+            className="h-full rounded-full bg-white/30"
+            style={{
+              marginLeft: `${(visibleStart / duration) * 100}%`,
+              width: `${(visibleDuration / duration) * 100}%`,
             }}
-          >
-            Smooth
-          </button>
-          <button
-            className="px-2 py-1 text-xs rounded hover:bg-white/10 text-text-secondary"
-            tabIndex={-1}
-            onClick={() => {
-              setTransition(pickerState.startKfId, 'cut');
-              setPickerState(null);
-            }}
-          >
-            Cut
-          </button>
+          />
         </div>
       )}
+
+      {/* Transition picker popover — sits above the timeline bar */}
+      {pickerState && (() => {
+        const activeTransition =
+          keyframes.find((k) => k.id === pickerState.startKfId)?.transitionToNext ?? null;
+        const smoothActive = activeTransition === 'smooth';
+        const cutActive = activeTransition === 'cut';
+        return (
+          <div
+            id="tl-transition-picker"
+            className="absolute z-20 flex items-center gap-2 p-1.5 rounded border border-white/30 bg-[#1f2b3a] shadow-elevation-8"
+            style={{
+              left: popoverLeft,
+              width: POPOVER_WIDTH,
+              bottom: 'calc(100% + 6px)',
+            }}
+          >
+            <span className="px-1 text-xs uppercase tracking-button text-text-secondary">
+              Transition
+            </span>
+            <button
+              className={`px-2 py-1 text-xs rounded border ${
+                smoothActive
+                  ? 'border-sky-400 bg-[rgba(56,189,248,0.45)] text-white font-medium'
+                  : 'border-sky-400/40 text-sky-300 hover:bg-sky-400/10'
+              }`}
+              tabIndex={-1}
+              onClick={() => {
+                setTransition(pickerState.startKfId, 'smooth');
+                setPickerState(null);
+              }}
+            >
+              Smooth
+            </button>
+            <button
+              className={`px-2 py-1 text-xs rounded border ${
+                cutActive
+                  ? 'border-orange-400 bg-[rgba(251,146,60,0.45)] text-white font-medium'
+                  : 'border-orange-400/40 text-orange-300 hover:bg-orange-400/10'
+              }`}
+              tabIndex={-1}
+              onClick={() => {
+                setTransition(pickerState.startKfId, 'cut');
+                setPickerState(null);
+              }}
+            >
+              Cut
+            </button>
+            {/* Chevron pointing down to the active segment */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute"
+              style={{
+                left: popoverArrowLeft - 6,
+                top: '100%',
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: '6px solid rgba(255,255,255,0.3)',
+              }}
+            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute"
+              style={{
+                left: popoverArrowLeft - 5,
+                top: '100%',
+                marginTop: -1,
+                width: 0,
+                height: 0,
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: '5px solid #1f2b3a',
+              }}
+            />
+          </div>
+        );
+      })()}
     </div>
   );
 }

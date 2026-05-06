@@ -94,7 +94,7 @@ export default function PlaybackControls() {
       <select
         value={playbackRate}
         onChange={handleRateChange}
-        className="ml-2 cursor-pointer rounded-default border border-border-subtle bg-surface-raised px-2 py-1 text-xs text-text-primary outline-none hover:bg-white/10"
+        className="ml-2 cursor-pointer rounded-default border border-border-subtle bg-surface-raised px-2 py-1 text-xs text-text-primary outline-none"
         style={{ colorScheme: 'dark' }}
         title="Playback speed"
       >

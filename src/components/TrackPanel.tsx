@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import useAppStore from '../store/useAppStore';
 
-function formatMmSs(seconds: number): string {
+function formatHhMmSs(seconds: number): string {
   const totalSeconds = Math.floor(Math.max(0, seconds));
-  const mm = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, '0');
+  const hh = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+  const mm = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
   const ss = (totalSeconds % 60).toString().padStart(2, '0');
-  return `${mm}:${ss}`;
+  return `${hh}:${mm}:${ss}`;
 }
 
 export default function TrackPanel() {
@@ -20,6 +19,12 @@ export default function TrackPanel() {
   const deleteTrack = useAppStore((s) => s.deleteTrack);
   const renameTrack = useAppStore((s) => s.renameTrack);
   const markActiveTrackSaved = useAppStore((s) => s.markActiveTrackSaved);
+  const videoMetadata = useAppStore((s) => s.videoMetadata);
+
+  const videoName = videoMetadata?.name ?? 'No video loaded';
+  const infoTooltip = videoMetadata
+    ? `Resolution: ${videoMetadata.width}×${videoMetadata.height}\nDuration: ${Math.floor(videoMetadata.duration / 60)}m ${(videoMetadata.duration % 60).toFixed(1)}s\nFPS: ${videoMetadata.fps}`
+    : 'No video loaded';
 
   const activeTrack = tracks.find((t) => t.id === activeTrackId) ?? null;
   const hasActive = activeTrack !== null;
@@ -129,16 +134,51 @@ export default function TrackPanel() {
 
   return (
     <div className="space-y-4 px-4 py-3">
+      {/* Video header — name, info tooltip, jobs */}
+      <div className="flex items-center gap-2">
+        <span
+          className="flex-1 truncate text-sm font-medium text-text-primary"
+          title={videoName}
+        >
+          {videoName}
+        </span>
+        <button
+          type="button"
+          className="rounded-default p-1 text-text-secondary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          title={infoTooltip}
+          aria-label="Video info"
+          disabled={!videoMetadata}
+        >
+          <span className="material-icons text-base leading-none align-middle" aria-hidden="true">info</span>
+        </button>
+        <button
+          type="button"
+          className="rounded-default p-1 text-text-secondary hover:bg-white/10"
+          title="Export queue"
+          aria-label="Export queue"
+          onClick={() => window.alert('No jobs')}
+        >
+          <span className="material-icons text-base leading-none align-middle" aria-hidden="true">upload</span>
+        </button>
+      </div>
+
+      <div className="border-t border-border-subtle" />
+
       {/* Selected track — label acts as panel heading */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-text-primary">Selected track</label>
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-text-primary">Selected clip</label>
 
         {!isRenaming ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <select
               className="flex-1 rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
               value={dropdownValue}
               onChange={(e) => setActiveTrackId(e.target.value)}
+              title={
+                hasActive
+                  ? `${formatHhMmSs(activeRange.inTime)} - ${formatHhMmSs(activeRange.outTime)}`
+                  : undefined
+              }
             >
               {!hasActive && (
                 <option value="" disabled>
@@ -159,7 +199,7 @@ export default function TrackPanel() {
               onClick={startRename}
               disabled={renameDisabled}
             >
-              <span aria-hidden="true">✏️</span>
+              <span className="material-icons text-base text-sm leading-none align-middle" aria-hidden="true">edit</span>
             </button>
             <button
               type="button"
@@ -169,7 +209,7 @@ export default function TrackPanel() {
               onClick={handleDelete}
               disabled={deleteDisabled}
             >
-              <span aria-hidden="true">🗑️</span>
+              <span className="material-icons text-base leading-none align-middle" aria-hidden="true">delete</span>
             </button>
           </div>
         ) : (
@@ -217,48 +257,50 @@ export default function TrackPanel() {
 
         <button
           type="button"
-          className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary hover:bg-white/10"
+          className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary font-medium uppercase hover:bg-white/10"
           onClick={() => createTrack()}
         >
-          + Create clip
+          Create clip
         </button>
       </div>
 
       {/* Mode */}
-      <div className="space-y-1.5">
-        <label className="text-sm text-text-secondary">Mode</label>
-        <select
-          className="w-full rounded-default border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-          value={mode}
-          onChange={(e) => setMode(e.target.value as 'edit' | 'view')}
-          disabled={modeDisabled}
-        >
-          <option value="edit">Edit</option>
-          <option value="view">View</option>
-        </select>
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-text-primary">Mode</label>
+        <div className="flex items-center gap-3">
+          <span
+            className={`text-sm ${mode === 'edit' ? 'font-medium text-text-primary' : 'text-text-secondary'}`}
+          >
+            Edit
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={mode === 'view'}
+            aria-label="Toggle mode between Edit and View"
+            disabled={modeDisabled}
+            onClick={() => setMode(mode === 'edit' ? 'view' : 'edit')}
+            className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-border-subtle bg-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-brand transition-transform ${
+                mode === 'view' ? 'translate-x-6' : 'translate-x-1'
+              }`}
+              aria-hidden="true"
+            />
+          </button>
+          <span
+            className={`text-sm ${mode === 'view' ? 'font-medium text-text-primary' : 'text-text-secondary'}`}
+          >
+            View
+          </span>
+        </div>
       </div>
 
       <div className="border-t border-border-subtle" />
 
-      {/* Clip range — read-only display */}
+      {/* Action buttons row */}
       <div className="space-y-2">
-        <div className="text-sm font-semibold text-text-primary">Clip range</div>
-        {hasActive ? (
-          <div className="flex items-center gap-4 py-1.5 text-sm text-text-primary">
-            <span>
-              <span className="text-text-secondary">In:</span>{' '}
-              <span className="font-mono">{formatMmSs(activeRange.inTime)}</span>
-            </span>
-            <span>
-              <span className="text-text-secondary">Out:</span>{' '}
-              <span className="font-mono">{formatMmSs(activeRange.outTime)}</span>
-            </span>
-          </div>
-        ) : (
-          <div className="py-1.5 text-sm text-text-secondary italic">No clip selected</div>
-        )}
-
-        {/* Action buttons row */}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -274,7 +316,7 @@ export default function TrackPanel() {
             onClick={() => window.alert('Export not available in POC')}
             disabled={exportDisabled}
           >
-            Export clip
+            Export mp4
           </button>
         </div>
       </div>
