@@ -30,7 +30,7 @@ export const SHORTCUTS: Shortcut[] = [
   {
     id: 'speed-cycle',
     keyGroups: [['Shift', [',', '.']]],
-    description: 'Cycle playback speed',
+    description: 'Playback speed',
     surface: 'Player',
   },
   {
@@ -74,7 +74,7 @@ export const SHORTCUTS: Shortcut[] = [
   {
     id: 'in-out-point',
     keyGroups: [['I'], ['O']],
-    description: 'Set in / out point',
+    description: 'Set clip start / end',
     surface: 'Timeline',
   },
   {
@@ -91,11 +91,11 @@ export const SHORTCUTS: Shortcut[] = [
   },
 
   // ── Bbox ─────────────────────────────────────────────────────────────
-  { id: 'bbox-move',        keyGroups: [[['←', '→', '↑', '↓']]],          description: 'Move bbox 1px',                    surface: 'Bbox' },
-  { id: 'bbox-move-shift',  keyGroups: [['Shift', ['←', '→', '↑', '↓']]], description: 'Move bbox 10px',                   surface: 'Bbox' },
+  { id: 'bbox-move',        keyGroups: [[['←', '→', '↑', '↓']]],          description: 'Move bbox',                    surface: 'Bbox' },
+  { id: 'bbox-move-shift',  keyGroups: [['Shift', ['←', '→', '↑', '↓']]], description: 'Move bbox (larger step)',                   surface: 'Bbox' },
   { id: 'bbox-scale',       keyGroups: [[']'], ['[']],                      description: 'Grow / shrink bbox',               surface: 'Bbox' },
   { id: 'bbox-scale-shift', keyGroups: [['Shift', [']', '[']]],             description: 'Grow / shrink bbox (larger step)', surface: 'Bbox' },
-  { id: 'bbox-constrain',   keyGroups: [['Shift']],               description: 'Maintain aspect ratio (resize / draw)',  surface: 'Bbox' },
+  { id: 'bbox-constrain',   keyGroups: [['Shift']],               description: 'Maintain aspect ratio',  surface: 'Bbox' },
 
   // ── Help ─────────────────────────────────────────────────────────────
   {

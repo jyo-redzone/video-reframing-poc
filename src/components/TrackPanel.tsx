@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import useAppStore from '../store/useAppStore';
 
 function formatHhMmSs(seconds: number): string {
@@ -22,9 +23,58 @@ export default function TrackPanel() {
   const videoMetadata = useAppStore((s) => s.videoMetadata);
 
   const videoName = videoMetadata?.name ?? 'No video loaded';
-  const infoTooltip = videoMetadata
-    ? `Resolution: ${videoMetadata.width}×${videoMetadata.height}\nDuration: ${Math.floor(videoMetadata.duration / 60)}m ${(videoMetadata.duration % 60).toFixed(1)}s\nFPS: ${videoMetadata.fps}`
-    : 'No video loaded';
+
+  // ── Video info popover ───────────────────────────────────────────
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoPos, setInfoPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+  const infoButtonRef = useRef<HTMLButtonElement>(null);
+  const infoPopoverRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!infoOpen) return;
+    const updatePos = () => {
+      const btn = infoButtonRef.current;
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      setInfoPos({
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+      });
+    };
+    updatePos();
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+    };
+  }, [infoOpen]);
+
+  useEffect(() => {
+    if (!infoOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setInfoOpen(false);
+    };
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        infoPopoverRef.current?.contains(target) ||
+        infoButtonRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setInfoOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onClick);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onClick);
+    };
+  }, [infoOpen]);
+
+  const formatDuration = (s: number) =>
+    `${Math.floor(s / 60)}m ${(s % 60).toFixed(1)}s`;
 
   const activeTrack = tracks.find((t) => t.id === activeTrackId) ?? null;
   const hasActive = activeTrack !== null;
@@ -143,14 +193,38 @@ export default function TrackPanel() {
           {videoName}
         </span>
         <button
+          ref={infoButtonRef}
           type="button"
           className="rounded-default p-1 text-text-secondary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-          title={infoTooltip}
           aria-label="Video info"
+          aria-expanded={infoOpen}
+          aria-haspopup="dialog"
           disabled={!videoMetadata}
+          onClick={() => setInfoOpen((v) => !v)}
         >
           <span className="material-icons text-base leading-none align-middle" aria-hidden="true">info</span>
         </button>
+        {infoOpen && videoMetadata && createPortal(
+          <div
+            ref={infoPopoverRef}
+            role="dialog"
+            aria-label="Video info"
+            className="fixed z-50 w-72 rounded-default border border-border-subtle bg-surface-raised p-3 text-xs text-text-primary shadow-elevation-8"
+            style={{ top: infoPos.top, right: infoPos.right }}
+          >
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
+              <dt className="text-text-secondary">URL</dt>
+              <dd className="break-all font-mono select-text">{videoMetadata.url}</dd>
+              <dt className="text-text-secondary">Resolution</dt>
+              <dd className="select-text">{videoMetadata.width}×{videoMetadata.height}</dd>
+              <dt className="text-text-secondary">Duration</dt>
+              <dd className="select-text">{formatDuration(videoMetadata.duration)}</dd>
+              <dt className="text-text-secondary">FPS</dt>
+              <dd className="select-text">{videoMetadata.fps}</dd>
+            </dl>
+          </div>,
+          document.body,
+        )}
         <button
           type="button"
           className="rounded-default p-1 text-text-secondary hover:bg-white/10"

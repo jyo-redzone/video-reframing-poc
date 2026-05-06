@@ -3,11 +3,12 @@ import useAppStore from '../store/useAppStore';
 
 export default function LandingScreen() {
   const [url, setUrl] = useState('');
+  const [name, setName] = useState('Sample video');
   const [fps, setFps] = useState<number>(25);
   const setVideoUrl = useAppStore((s) => s.setVideoUrl);
   const setVideoMetadata = useAppStore((s) => s.setVideoMetadata);
 
-  const isValid = url.trim() !== '' && fps > 0;
+  const isValid = url.trim() !== '' && name.trim() !== '' && fps > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +19,7 @@ export default function LandingScreen() {
     // we use placeholder values here that will be overwritten.
     setVideoMetadata({
       id: 'vid_hls',
-      name: url,
+      name: name.trim(),
       width: 0,
       height: 0,
       fps,
@@ -36,6 +37,20 @@ export default function LandingScreen() {
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="video-name" className="text-sm text-text-secondary">
+              Video name
+            </label>
+            <input
+              id="video-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Sample video"
+              className="rounded-default border border-border-subtle bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled focus:outline focus:outline-2 focus:outline-brand"
+            />
+          </div>
+
           <div className="flex flex-col gap-1.5">
             <label htmlFor="hls-url" className="text-sm text-text-secondary">
               HLS URL (.m3u8)
