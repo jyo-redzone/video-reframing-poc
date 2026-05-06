@@ -21,13 +21,39 @@ export default function PlayerPanel() {
   const [hlsError, setHlsError] = useState<string | null>(null);
   const [levels, setLevels] = useState<HlsLevel[]>([]);
   const [currentLevel, setCurrentLevel] = useState<number>(-1);
+  const [isBuffering, setIsBuffering] = useState(false);
   const hlsRef = useRef<Hls | null>(null);
+  const bufferTimerRef = useRef<number | null>(null);
+
+  const cancelBuffering = useCallback(() => {
+    if (bufferTimerRef.current !== null) {
+      clearTimeout(bufferTimerRef.current);
+      bufferTimerRef.current = null;
+    }
+    setIsBuffering(false);
+  }, []);
+
+  const scheduleBufferingShow = useCallback(() => {
+    if (bufferTimerRef.current !== null) clearTimeout(bufferTimerRef.current);
+    bufferTimerRef.current = window.setTimeout(() => {
+      bufferTimerRef.current = null;
+      setIsBuffering(true);
+    }, 250);
+  }, []);
+
+  // Clear any pending buffering timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (bufferTimerRef.current !== null) clearTimeout(bufferTimerRef.current);
+    };
+  }, []);
 
   // Attach HLS source to the video element whenever the URL changes.
   useEffect(() => {
     const videoEl = videoRef.current;
     if (!videoEl || !videoUrl) return;
 
+    cancelBuffering();
     setHlsError(null);
     setLevels([]);
     setCurrentLevel(-1);
@@ -65,7 +91,7 @@ export default function PlayerPanel() {
     } else {
       setHlsError('HLS not supported in this browser');
     }
-  }, [videoUrl, videoRef]);
+  }, [videoUrl, videoRef, cancelBuffering]);
 
   const setLevel = useCallback((level: number) => {
     if (hlsRef.current) {
@@ -110,10 +136,26 @@ export default function PlayerPanel() {
             className="h-full w-full object-contain"
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={() => setIsPlaying(false)}
+            onLoadStart={scheduleBufferingShow}
+            onWaiting={scheduleBufferingShow}
+            onStalled={scheduleBufferingShow}
+            onSeeking={scheduleBufferingShow}
+            onPlaying={cancelBuffering}
+            onCanPlay={cancelBuffering}
+            onSeeked={cancelBuffering}
           />
           {hlsError && (
             <div className="absolute inset-0 flex items-center justify-center bg-appbar/80">
               <p className="text-sm text-error">{hlsError}</p>
+            </div>
+          )}
+          {!hlsError && isBuffering && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div
+                className="h-12 w-12 rounded-full border-4 border-white/25 border-t-brand animate-spin"
+                role="status"
+                aria-label="Buffering"
+              />
             </div>
           )}
           {showPreview && <PreviewCanvas containerRef={containerRef} />}
