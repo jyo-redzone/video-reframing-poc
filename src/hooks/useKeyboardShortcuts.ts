@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import useAppStore from '../store/useAppStore';
 import { useVideoRef } from '../components/VideoRefContext';
-import { SPEED_OPTIONS } from '../constants';
+import { SPEED_OPTIONS } from '../config';
 
 const INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 

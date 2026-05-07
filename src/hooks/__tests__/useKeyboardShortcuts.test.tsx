@@ -4,7 +4,7 @@ import { render, act } from '@testing-library/react';
 import useAppStore from '../../store/useAppStore';
 import useKeyboardShortcuts from '../useKeyboardShortcuts';
 import { VideoRefProvider } from '../../components/VideoRefContext';
-import { SPEED_OPTIONS } from '../../constants';
+import { SPEED_OPTIONS } from '../../config';
 
 // Harness: renders the hook inside a VideoRefProvider.
 // useVideoRef is called at hook level so the provider must wrap the component.

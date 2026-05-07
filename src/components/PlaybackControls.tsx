@@ -1,7 +1,7 @@
 import useAppStore from '../store/useAppStore';
 import { useVideoRef } from './VideoRefContext';
 import { useHlsControl } from './HlsControlContext';
-import { SPEED_OPTIONS } from '../constants';
+import { SPEED_OPTIONS } from '../config';
 
 export default function PlaybackControls() {
   const videoRef = useVideoRef();
