@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import useAppStore from '../store/useAppStore';
-import { containerToSource } from '../utils/coordinates';
-import type { Keyframe } from '../types';
+import useAppStore from '../../store/useAppStore';
+import { containerToSource } from '../../utils/coordinates';
+import type { Keyframe } from '../../types';
 
 const EMPTY_KEYFRAMES: Keyframe[] = [];
 
@@ -37,7 +37,6 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
   const [drawing, setDrawing] = useState<DrawState | null>(null);
   const drawingRef = useRef<DrawState | null>(null);
 
-  // Keep ref in sync with state
   useEffect(() => {
     drawingRef.current = drawing;
   }, [drawing]);
@@ -59,16 +58,12 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
           const { startX, startY } = drawingRef.current;
           const dx = cx - startX;
           const dy = cy - startY;
-          // Determine which axis drives based on which matches the target aspect
           const wantedH = Math.abs(dx) / aspect;
           if (Math.abs(dy) >= wantedH) {
-            // dy drives: constrain cx so width matches dy*aspect
             cx = startX + Math.sign(dx || 1) * Math.abs(dy) * aspect;
           } else {
-            // dx drives: constrain cy so height matches dx/aspect
             cy = startY + Math.sign(dy || 1) * Math.abs(dx) / aspect;
           }
-          // Re-clamp after snapping (snapping may push outside container bounds)
           cx = Math.max(0, Math.min(cx, containerBounds.width));
           cy = Math.max(0, Math.min(cy, containerBounds.height));
         }
@@ -85,8 +80,6 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
     if (!prev || !containerRef.current || !videoMetadata) return;
 
     const drawnRect = getDrawnRect(prev);
-
-    // Minimum draw size: 20px container pixels
     if (drawnRect.width < 20 || drawnRect.height < 20) return;
 
     const containerBounds = containerRef.current.getBoundingClientRect();
@@ -99,39 +92,27 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
     );
 
     setViewportRect(sourceRect);
-  }, [
-    containerRef,
-    videoMetadata,
-    setViewportRect,
-  ]);
+  }, [containerRef, videoMetadata, setViewportRect]);
 
-  // Attach window listeners when drawing
   useEffect(() => {
     if (!drawing) return;
-
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [drawing, handleMouseMove, handleMouseUp]);
 
-  // Early return after all hooks
   if (activeTrackId === '') return null;
   if (mode !== 'edit') return null;
-  // Once keyframes exist, ViewportOverlay always has a displayed rect to show
-  // (resolved via CRE), so the draw tool stays out of the way.
   if (viewportRect !== null || keyframes.length > 0) return null;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
-
     const containerBounds = containerRef.current.getBoundingClientRect();
     const x = e.clientX - containerBounds.left;
     const y = e.clientY - containerBounds.top;
-
     setDrawing({ startX: x, startY: y, currentX: x, currentY: y });
   };
 

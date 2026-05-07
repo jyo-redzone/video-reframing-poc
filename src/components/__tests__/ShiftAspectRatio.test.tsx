@@ -13,7 +13,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { useRef } from 'react';
 import useAppStore from '../../store/useAppStore';
-import BoundingBoxTool from '../BoundingBoxTool';
+import BoundingBoxTool from '../Viewport/BoundingBoxTool';
 
 // ── Pure-logic helpers (mirroring ViewportOverlay handleMouseMove) ─────────────
 // These replicate the aspect-preserving resize math so we can test the algorithm

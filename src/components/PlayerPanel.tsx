@@ -3,8 +3,8 @@ import Hls from 'hls.js';
 import useAppStore from '../store/useAppStore';
 import { useVideoRef } from './VideoRefContext';
 import { HlsControlProvider, type HlsLevel } from './HlsControlContext';
-import ViewportOverlay from './ViewportOverlay';
-import BoundingBoxTool from './BoundingBoxTool';
+import ViewportOverlay from './Viewport';
+import BoundingBoxTool from './Viewport/BoundingBoxTool';
 import PreviewCanvas from './PreviewCanvas';
 import PlaybackControls from './PlaybackControls';
 
