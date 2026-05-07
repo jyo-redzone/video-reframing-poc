@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useAppStore from '../store/useAppStore';
 import { sourceToPercent, getVideoRenderArea } from '../utils/coordinates';
-import type { SourceRect } from '../types';
+import { resolve } from '../engine/cre';
+import type { Keyframe, SourceRect } from '../types';
+
+const EMPTY_KEYFRAMES: Keyframe[] = [];
 
 type Corner = 'nw' | 'ne' | 'sw' | 'se';
 
@@ -25,13 +28,43 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
   const videoMetadata = useAppStore((s) => s.videoMetadata);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
   const activeTrackId = useAppStore((s) => s.activeTrackId);
+  const currentTime = useAppStore((s) => s.currentTime);
+  const keyframes = useAppStore(
+    (s) => s.tracks.find((t) => t.id === s.activeTrackId)?.keyframes ?? EMPTY_KEYFRAMES,
+  );
 
   const [interaction, setInteraction] = useState<Interaction | null>(null);
+  // Wheel-zoom is event-driven (no mousedown/up), so we treat it as a brief
+  // interaction window during which the CRE-follow override is suspended.
+  const [wheelActive, setWheelActive] = useState(false);
+  const wheelTimerRef = useRef<number | null>(null);
 
   const videoWidth = videoMetadata?.width ?? 0;
   const videoHeight = videoMetadata?.height ?? 0;
 
   const isEdit = mode === 'edit';
+
+  // The bbox actually shown on screen. While the user is interacting (drag/resize/wheel),
+  // we mirror the live `viewportRect` so gestures feel direct. Otherwise, when
+  // keyframes exist, follow the CRE-resolved camera at `currentTime` so the bbox
+  // tracks playback, prev/next-second seeks, and recording-while-playing.
+  const displayedRect: SourceRect | null = useMemo(() => {
+    if (interaction !== null || wheelActive) return viewportRect;
+    if (keyframes.length > 0 && videoMetadata) {
+      return resolve(
+        currentTime,
+        keyframes,
+        { width: videoMetadata.width, height: videoMetadata.height },
+        videoMetadata.fps,
+      ).sourceRect;
+    }
+    return viewportRect;
+  }, [interaction, wheelActive, viewportRect, keyframes, currentTime, videoMetadata]);
+
+  // Keep a ref so window event handlers can read the latest displayedRect
+  // without re-binding listeners on every change.
+  const displayedRectRef = useRef(displayedRect);
+  displayedRectRef.current = displayedRect;
 
   const clampRect = useCallback(
     (rect: SourceRect): SourceRect => {
@@ -217,7 +250,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      const rect = useAppStore.getState().viewportRect;
+      const rect = displayedRectRef.current;
       const meta = useAppStore.getState().videoMetadata;
       if (!rect || !meta) return;
 
@@ -248,43 +281,60 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
       newY = Math.min(Math.max(newY, 0), vh - newH);
 
       useAppStore.getState().setViewportRect({ x: newX, y: newY, width: newW, height: newH });
+
+      // Hold the wheel-active flag so the CRE-follow override stays suspended
+      // while the user is mid-zoom. Cleared shortly after the last wheel event.
+      setWheelActive(true);
+      if (wheelTimerRef.current !== null) clearTimeout(wheelTimerRef.current);
+      wheelTimerRef.current = window.setTimeout(() => {
+        setWheelActive(false);
+        wheelTimerRef.current = null;
+      }, 250);
     };
 
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
       el.removeEventListener('wheel', handleWheel);
+      if (wheelTimerRef.current !== null) {
+        clearTimeout(wheelTimerRef.current);
+        wheelTimerRef.current = null;
+      }
     };
   }, [isEdit, !!viewportRect, !!videoMetadata]);
 
   // Early returns after all hooks
   if (activeTrackId === '') return null;
   if (mode !== 'edit') return null;
-  if (!viewportRect || !videoMetadata) return null;
+  if (!videoMetadata || !displayedRect) return null;
 
   const container = containerRef.current;
   if (!container) return null;
   const { width: cW, height: cH } = container.getBoundingClientRect();
-  const pct = sourceToPercent(viewportRect, videoWidth, videoHeight, cW, cH);
+  const pct = sourceToPercent(displayedRect, videoWidth, videoHeight, cW, cH);
 
   const handleDragStart = (e: React.MouseEvent) => {
     // Prevent if clicking on a resize handle
     if ((e.target as HTMLElement).dataset.resizeHandle) return;
     e.stopPropagation();
 
+    // Seed both the gesture and the store from the rect the user actually sees.
+    // If we're following CRE, displayedRect differs from viewportRect.
+    setViewportRect({ ...displayedRect });
     setInteraction({
       type: 'drag',
       startMouse: { x: e.clientX, y: e.clientY },
-      startRect: { ...viewportRect },
+      startRect: { ...displayedRect },
     });
   };
 
   const handleResizeStart = (corner: Corner, e: React.MouseEvent) => {
     e.stopPropagation();
+    setViewportRect({ ...displayedRect });
     setInteraction({
       type: 'resize',
       corner,
       startMouse: { x: e.clientX, y: e.clientY },
-      startRect: { ...viewportRect },
+      startRect: { ...displayedRect },
     });
   };
 
@@ -311,7 +361,7 @@ export default function ViewportOverlay({ containerRef }: ViewportOverlayProps) 
     },
   ];
 
-  const rectLabel = `${Math.round(viewportRect.width)}x${Math.round(viewportRect.height)}`;
+  const rectLabel = `${Math.round(displayedRect.width)}x${Math.round(displayedRect.height)}`;
 
   return (
     <div

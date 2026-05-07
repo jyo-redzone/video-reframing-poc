@@ -75,18 +75,29 @@ export default function PreviewCanvas({ containerRef }: PreviewCanvasProps) {
         const dx = (canvas.width - dw) / 2;
         const dy = (canvas.height - dh) / 2;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(
-          video,
-          sourceRect.x,
-          sourceRect.y,
-          sourceRect.width,
-          sourceRect.height,
-          dx,
-          dy,
-          dw,
-          dh,
-        );
+        // drawImage's source coords are in the video's *currently decoded* pixel
+        // space (`video.videoWidth/Height`), which can drift from the stored
+        // metadata when HLS adapts renditions mid-playback. Scale sourceRect into
+        // live coords so the crop stays anchored to the same content.
+        const liveW = video.videoWidth;
+        const liveH = video.videoHeight;
+        if (liveW > 0 && liveH > 0) {
+          const scaleX = liveW / videoMetadata.width;
+          const scaleY = liveH / videoMetadata.height;
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(
+            video,
+            sourceRect.x * scaleX,
+            sourceRect.y * scaleY,
+            sourceRect.width * scaleX,
+            sourceRect.height * scaleY,
+            dx,
+            dy,
+            dw,
+            dh,
+          );
+        }
       }
 
       rafId = requestAnimationFrame(draw);

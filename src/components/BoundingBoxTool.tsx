@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useAppStore from '../store/useAppStore';
 import { containerToSource } from '../utils/coordinates';
+import type { Keyframe } from '../types';
+
+const EMPTY_KEYFRAMES: Keyframe[] = [];
 
 interface BoundingBoxToolProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -27,6 +30,9 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
   const viewportRect = useAppStore((s) => s.viewportRect);
   const setViewportRect = useAppStore((s) => s.setViewportRect);
   const activeTrackId = useAppStore((s) => s.activeTrackId);
+  const keyframes = useAppStore(
+    (s) => s.tracks.find((t) => t.id === s.activeTrackId)?.keyframes ?? EMPTY_KEYFRAMES,
+  );
 
   const [drawing, setDrawing] = useState<DrawState | null>(null);
   const drawingRef = useRef<DrawState | null>(null);
@@ -115,7 +121,9 @@ export default function BoundingBoxTool({ containerRef }: BoundingBoxToolProps) 
   // Early return after all hooks
   if (activeTrackId === '') return null;
   if (mode !== 'edit') return null;
-  if (viewportRect !== null) return null;
+  // Once keyframes exist, ViewportOverlay always has a displayed rect to show
+  // (resolved via CRE), so the draw tool stays out of the way.
+  if (viewportRect !== null || keyframes.length > 0) return null;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;

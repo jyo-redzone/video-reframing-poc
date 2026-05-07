@@ -572,10 +572,10 @@ export default function TimelineBar() {
         return (
           <div
             id="tl-transition-picker"
-            className="absolute z-20 flex items-center gap-2 p-1.5 rounded border border-white/30 bg-[#1f2b3a] shadow-elevation-8"
+            className="absolute z-20 flex items-center gap-2 p-1.5 rounded border border-white/30 bg-[#1f2b3a] shadow-elevation-8 whitespace-nowrap"
             style={{
               left: popoverLeft,
-              width: POPOVER_WIDTH,
+              maxWidth: `calc(100% - ${popoverLeft + 4}px)`,
               bottom: 'calc(100% + 6px)',
             }}
           >
