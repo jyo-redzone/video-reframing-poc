@@ -18,7 +18,7 @@ export function keyframeTimeEpsilon(fps: number | null | undefined): number {
 }
 
 // Playback speeds (merged from constants.ts)
-export const SPEED_OPTIONS = [0.5, 1, 1.5, 2, 4, 8, 16] as const;
+export const SPEED_OPTIONS = [0.5, 0.75, 1, 1.5, 2, 4, 8, 16] as const;
 
 // Timeline layout (SVG viewBox is 0 0 1000 75)
 export const TL_X0 = 40;           // left edge of timeline track area

@@ -1,4 +1,3 @@
-# CLAUDE.md — VideoReframingPoc orientation
 
 ## Product
 
@@ -50,6 +49,12 @@ Track → has many Keyframes → CRE derives Segments → resolve(time) = Source
 - `track.keyframes` is always sorted by `time` ascending (enforced by store on every write)
 - The last keyframe in a track always has `transitionToNext: null`; all others have `'smooth' | 'cut'`
 - Keyframe dedup: adding/committing a KF within `KEYFRAME_TIME_EPSILON_FRAMES / fps` seconds of an existing KF updates the existing one in place
+
+## Reference docs
+
+For architectural decisions or domain model changes, read:
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/DOMAIN-MODEL.md](docs/DOMAIN-MODEL.md)
 
 ## Conventions
 
