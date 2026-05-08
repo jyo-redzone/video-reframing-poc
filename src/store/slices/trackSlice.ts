@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { Track, Keyframe, SourceRect } from '../../types';
+import type { Track, Keyframe, SourceRect, ClipRange } from '../../types';
 import { keyframeTimeEpsilon } from '../../config';
 import type { AppStore } from '../useAppStore';
 
@@ -7,6 +7,7 @@ export type TrackSlice = {
   tracks: Track[];
   activeTrackId: string;
   createTrack: () => string;
+  importTrack: (track: Track) => string;
   deleteTrack: (id: string) => void;
   renameTrack: (id: string, name: string) => void;
   setActiveTrackId: (id: string) => void;
@@ -50,6 +51,61 @@ export const createTrackSlice: StateCreator<AppStore, [], [], TrackSlice> = (set
       };
     });
     return newId;
+  },
+
+  importTrack: (track) => {
+    const newTrackId = `track_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    // Re-id keyframes and rewrite trackId. Done outside set() so we don't
+    // depend on store state for id generation.
+    const reidKeyframes: Keyframe[] = track.keyframes.map((kf, idx) => ({
+      ...kf,
+      id: `kf_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 8)}`,
+      trackId: newTrackId,
+    }));
+
+    // Defensive sort by time (file may have been hand-edited).
+    const sortedKfs = sortByTime(reidKeyframes);
+
+    // Enforce transition invariants:
+    //   - last keyframe → transitionToNext === null
+    //   - all preceding keyframes → 'smooth' or 'cut' (default 'smooth')
+    const lastIdx = sortedKfs.length - 1;
+    const fixedKfs: Keyframe[] = sortedKfs.map((kf, i) => {
+      if (i === lastIdx) {
+        return kf.transitionToNext === null ? kf : { ...kf, transitionToNext: null };
+      }
+      const t = kf.transitionToNext;
+      const valid = t === 'smooth' || t === 'cut';
+      return valid ? kf : { ...kf, transitionToNext: 'smooth' as const };
+    });
+
+    set((state) => {
+      const duration = state.videoMetadata?.duration;
+      const range: ClipRange = duration != null && Number.isFinite(duration)
+        ? {
+            inTime: Math.max(0, Math.min(track.range.inTime, duration)),
+            outTime: Math.max(0, Math.min(track.range.outTime, duration)),
+          }
+        : { inTime: track.range.inTime, outTime: track.range.outTime };
+
+      const newTrack: Track = {
+        id: newTrackId,
+        videoId: '',
+        name: track.name,
+        keyframes: fixedKfs,
+        range,
+        isDirty: false,
+      };
+
+      return {
+        tracks: [...state.tracks, newTrack],
+        activeTrackId: newTrackId,
+        viewportRect: null,
+      };
+    });
+
+    return newTrackId;
   },
 
   deleteTrack: (id) =>

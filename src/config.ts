@@ -34,3 +34,7 @@ export const VIEWPORT_MIN_SIZE_RATIO = 0.1;     // min W or H as fraction of vid
 export const VIEWPORT_WHEEL_ZOOM_IN = 0.9;      // scale factor when scrolling to zoom in
 export const VIEWPORT_WHEEL_ZOOM_OUT = 1.1;     // scale factor when scrolling to zoom out
 export const VIEWPORT_WHEEL_DEBOUNCE_MS = 250;  // ms after last wheel event to clear wheelActive
+
+// Track file I/O
+export const TRACK_FILE_SCHEMA_VERSION = 1;     // schemaVersion field in saved Track JSON files
+export const TRACK_FILENAME_PART_MAX_LENGTH = 80; // max length for sanitized filename parts

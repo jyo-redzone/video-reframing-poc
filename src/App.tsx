@@ -8,12 +8,14 @@ import { VideoRefProvider } from './components/VideoRefContext';
 import usePlayback from './hooks/usePlayback';
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 import useRecordingSampler from './hooks/useRecordingSampler';
+import useUnsavedChangesWarning from './hooks/useUnsavedChangesWarning';
 import useAppStore from './store/useAppStore';
 
 function AppContent() {
   usePlayback();
   useKeyboardShortcuts();
   useRecordingSampler();
+  useUnsavedChangesWarning();
 
   const helpPanelOpen = useAppStore((s) => s.helpPanelOpen);
   const toggleHelpPanel = useAppStore((s) => s.toggleHelpPanel);

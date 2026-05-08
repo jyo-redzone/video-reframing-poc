@@ -32,7 +32,7 @@ src/
 ├── hooks/          # usePlayback, useKeyboardShortcuts, useRecordingSampler
 ├── components/
 │   ├── Timeline/   # TimelineBar shell + sub-components + timelineLayout.ts
-│   ├── TrackPanel/ # TrackPanel shell + TrackSelectorRow, SaveDialog, VideoInfoPopover
+│   ├── TrackPanel/ # TrackPanel shell + TrackSelectorRow, VideoInfoPopover
 │   └── Viewport/   # ViewportOverlay shell + useViewportDrag + BoundingBoxTool
 ├── utils/          # coordinates.ts (video ↔ container coord transforms)
 └── config.ts       # All constants and magic numbers

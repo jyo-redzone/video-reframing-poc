@@ -10,7 +10,9 @@
       "Skill(code-reviewer)",
       "Skill(code-reviewer:*)",
       "Bash(mkdir -p docs/coding-team/clip-crud)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Skill(architect)",
+      "Skill(architect:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\jyots\\source\\work\\VideoReframingPoc\\docs\\coding-team"

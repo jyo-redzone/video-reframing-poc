@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
 import useAppStore from '../../store/useAppStore';
 import VideoInfoPopover from './VideoInfoPopover';
 import TrackSelectorRow from './TrackSelectorRow';
-import SaveDialog from './SaveDialog';
+import {
+  serializeTrack,
+  buildTrackFilename,
+  downloadJsonFile,
+} from '../../utils/trackFile';
 
 export default function TrackPanel() {
   const mode = useAppStore((s) => s.mode);
@@ -11,6 +14,7 @@ export default function TrackPanel() {
   const activeTrackId = useAppStore((s) => s.activeTrackId);
   const setActiveTrackId = useAppStore((s) => s.setActiveTrackId);
   const createTrack = useAppStore((s) => s.createTrack);
+  const importTrack = useAppStore((s) => s.importTrack);
   const deleteTrack = useAppStore((s) => s.deleteTrack);
   const renameTrack = useAppStore((s) => s.renameTrack);
   const markActiveTrackSaved = useAppStore((s) => s.markActiveTrackSaved);
@@ -20,21 +24,22 @@ export default function TrackPanel() {
   const hasActive = activeTrack !== null;
   const activeRange = activeTrack?.range ?? { inTime: 0, outTime: 0 };
 
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-
-  useEffect(() => { if (!hasActive) setShowSaveDialog(false); }, [hasActive]);
-
   const handleDelete = () => {
     if (!activeTrack) return;
     const ok = window.confirm(`Delete clip "${activeTrack.name}"? This cannot be undone.`);
     if (ok) deleteTrack(activeTrack.id);
   };
 
-  const openSaveDialog = () => { if (activeTrack) setShowSaveDialog(true); };
-  const closeSaveDialog = () => { setShowSaveDialog(false); markActiveTrackSaved(); };
+  const handleSave = () => {
+    if (!activeTrack || !videoMetadata) return;
+    const json = serializeTrack(activeTrack, videoMetadata.url);
+    const filename = buildTrackFilename(videoMetadata.name, activeTrack.name);
+    downloadJsonFile(filename, json);
+    markActiveTrackSaved();
+  };
 
   const videoName = videoMetadata?.name ?? 'No video loaded';
-  const saveDisabled = !hasActive || !(activeTrack?.isDirty ?? false);
+  const saveDisabled = !hasActive || !(activeTrack?.isDirty ?? false) || !videoMetadata;
   const modeDisabled = !hasActive;
 
   return (
@@ -64,10 +69,12 @@ export default function TrackPanel() {
           activeTrackId={activeTrackId}
           hasActive={hasActive}
           activeRange={activeRange}
+          currentVideoUrl={videoMetadata?.url ?? null}
           onSelectTrack={setActiveTrackId}
           onRenameTrack={renameTrack}
           onDeleteTrack={handleDelete}
           onCreateTrack={createTrack}
+          onImportTrack={importTrack}
         />
       </div>
 
@@ -106,7 +113,7 @@ export default function TrackPanel() {
           <button
             type="button"
             className="flex-1 rounded-default bg-brand px-3 py-2 text-sm font-medium uppercase tracking-button text-white hover:bg-brand/80 disabled:opacity-40 disabled:cursor-not-allowed"
-            onClick={openSaveDialog}
+            onClick={handleSave}
             disabled={saveDisabled}
           >
             Save clip
@@ -121,10 +128,6 @@ export default function TrackPanel() {
           </button>
         </div>
       </div>
-
-      {showSaveDialog && activeTrack && (
-        <SaveDialog track={activeTrack} onClose={closeSaveDialog} />
-      )}
     </div>
   );
 }
