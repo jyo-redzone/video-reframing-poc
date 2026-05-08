@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import TrackPanel from './components/TrackPanel';
 import HelpPanel from './components/HelpPanel';
 import PlayerPanel from './components/PlayerPanel';
-import TimelineBar from './components/TimelineBar';
+import TimelineBar from './components/Timeline';
 import LandingScreen from './components/LandingScreen';
 import { VideoRefProvider } from './components/VideoRefContext';
 import usePlayback from './hooks/usePlayback';

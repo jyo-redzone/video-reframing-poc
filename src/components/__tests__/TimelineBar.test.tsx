@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useRef } from 'react';
 import { render, act } from '@testing-library/react';
-import TimelineBar from '../TimelineBar';
+import TimelineBar from '../Timeline';
 import { VideoRefProvider } from '../VideoRefContext';
 import useAppStore from '../../store/useAppStore';
 
