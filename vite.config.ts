@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  base: "/video-reframing-poc/",
   test: {
     globals: true,
     environment: 'jsdom',

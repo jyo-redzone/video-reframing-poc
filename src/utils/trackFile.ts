@@ -1,19 +1,43 @@
-import type { Track, Keyframe, ClipRange, SourceRect } from '../types';
+import type { Track, Keyframe, ClipRange, SourceRect, VideoMetadata } from '../types';
 import { TRACK_FILE_SCHEMA_VERSION, TRACK_FILENAME_PART_MAX_LENGTH } from '../config';
 
-export type ParsedTrackFile = { videoUrl: string; track: Track };
+/**
+ * Subset of VideoMetadata persisted in the saved Track JSON file. The on-disk
+ * shape is intentionally minimal: only the dimensions/fps that downstream
+ * export tooling needs to scale SourceRects from authoring dims to whichever
+ * variant gets decoded. Mutable fields like `id`, `name`, `duration`, `url`
+ * are not persisted here.
+ */
+export type TrackFileVideoMetadata = Pick<VideoMetadata, 'width' | 'height' | 'fps'>;
+
+export type ParsedTrackFile = {
+  videoUrl: string;
+  videoMetadata: TrackFileVideoMetadata;
+  track: Track;
+};
 
 export type ParseResult =
-  | { ok: true; videoUrl: string; track: Track }
+  | { ok: true; videoUrl: string; videoMetadata: TrackFileVideoMetadata; track: Track }
   | { ok: false; error: string };
 
 /**
- * Pretty-prints a Track + videoUrl into a JSON payload suitable for download.
+ * Pretty-prints a Track + videoUrl + videoMetadata into a JSON payload suitable
+ * for download. `videoMetadata` is recorded at the top level of the payload
+ * (not inside `track`) and contains only width/height/fps.
  */
-export function serializeTrack(track: Track, videoUrl: string): string {
+export function serializeTrack(
+  track: Track,
+  videoUrl: string,
+  videoMetadata: TrackFileVideoMetadata,
+): string {
   const payload = {
     schemaVersion: TRACK_FILE_SCHEMA_VERSION,
     videoUrl,
+    videoMetadata: {
+      width: videoMetadata.width,
+      height: videoMetadata.height,
+      fps: videoMetadata.fps,
+    },
     track,
   };
   return JSON.stringify(payload, null, 2);
@@ -37,6 +61,21 @@ function validateSourceRect(v: unknown, path: string): SourceRect | string {
   if (!isFiniteNumber(width)) return `${path}.width: expected a finite number`;
   if (!isFiniteNumber(height)) return `${path}.height: expected a finite number`;
   return { x, y, width, height };
+}
+
+function validateVideoMetadata(v: unknown, path: string): TrackFileVideoMetadata | string {
+  if (!isPlainObject(v)) return `${path}: expected an object`;
+  const { width, height, fps } = v;
+  if (!isFiniteNumber(width) || width <= 0) {
+    return `${path}.width: expected a positive finite number`;
+  }
+  if (!isFiniteNumber(height) || height <= 0) {
+    return `${path}.height: expected a positive finite number`;
+  }
+  if (!isFiniteNumber(fps) || fps <= 0) {
+    return `${path}.fps: expected a positive finite number`;
+  }
+  return { width, height, fps };
 }
 
 function validateClipRange(v: unknown, path: string): ClipRange | string {
@@ -116,7 +155,7 @@ export function parseTrackFile(text: string): ParseResult {
     return { ok: false, error: 'Invalid track file: top-level value must be an object' };
   }
 
-  const { schemaVersion, videoUrl, track } = raw;
+  const { schemaVersion, videoUrl, videoMetadata, track } = raw;
 
   if (schemaVersion !== TRACK_FILE_SCHEMA_VERSION) {
     return {
@@ -131,12 +170,17 @@ export function parseTrackFile(text: string): ParseResult {
     return { ok: false, error: 'videoUrl: expected a non-empty string' };
   }
 
+  const metadataResult = validateVideoMetadata(videoMetadata, 'videoMetadata');
+  if (typeof metadataResult === 'string') {
+    return { ok: false, error: metadataResult };
+  }
+
   const trackResult = validateTrack(track, 'track');
   if (typeof trackResult === 'string') {
     return { ok: false, error: trackResult };
   }
 
-  return { ok: true, videoUrl, track: trackResult };
+  return { ok: true, videoUrl, videoMetadata: metadataResult, track: trackResult };
 }
 
 // ── Filename helpers ──────────────────────────────────────────────────────

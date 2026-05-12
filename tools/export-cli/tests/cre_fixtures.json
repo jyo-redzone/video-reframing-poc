@@ -1,0 +1,123 @@
+{
+  "_comment": "Shared CRE parity fixtures. Both src/engine/cre.ts (Vitest) and tools/export-cli/cre.py (Python unittest) assert their resolve() output matches these expected values within 1e-9. Authority for expected values is src/engine/cre.ts.",
+  "cases": [
+    {
+      "name": "empty keyframes — full-bounds rect for any sample time",
+      "fps": 30,
+      "bounds": { "width": 1920, "height": 1080 },
+      "keyframes": [],
+      "samples": [
+        { "time": 0.0, "expected": { "x": 0, "y": 0, "width": 1920, "height": 1080 } },
+        { "time": 1.5, "expected": { "x": 0, "y": 0, "width": 1920, "height": 1080 } },
+        { "time": 100.0, "expected": { "x": 0, "y": 0, "width": 1920, "height": 1080 } }
+      ]
+    },
+    {
+      "name": "single keyframe — hold for sample before / on / after",
+      "fps": 30,
+      "bounds": { "width": 1920, "height": 1080 },
+      "keyframes": [
+        { "time": 0.5, "sourceRect": { "x": 100, "y": 100, "width": 800, "height": 600 }, "transitionToNext": null }
+      ],
+      "samples": [
+        { "time": 0.0, "expected": { "x": 100, "y": 100, "width": 800, "height": 600 } },
+        { "time": 0.5, "expected": { "x": 100, "y": 100, "width": 800, "height": 600 } },
+        { "time": 2.0, "expected": { "x": 100, "y": 100, "width": 800, "height": 600 } }
+      ]
+    },
+    {
+      "name": "two keyframes smooth — sample on kf1, midpoint, on kf2",
+      "fps": 30,
+      "bounds": { "width": 3840, "height": 2160 },
+      "keyframes": [
+        { "time": 1.0, "sourceRect": { "x": 0, "y": 0, "width": 1920, "height": 1080 }, "transitionToNext": "smooth" },
+        { "time": 2.0, "sourceRect": { "x": 200, "y": 100, "width": 960, "height": 540 }, "transitionToNext": null }
+      ],
+      "samples": [
+        { "time": 1.0, "expected": { "x": 0, "y": 0, "width": 1920, "height": 1080 } },
+        { "time": 1.5, "expected": { "x": 100, "y": 50, "width": 1440, "height": 810 } },
+        { "time": 2.0, "expected": { "x": 200, "y": 100, "width": 960, "height": 540 } }
+      ]
+    },
+    {
+      "name": "two keyframes cut — hold kf1 until t2, snap to kf2 at t>=t2",
+      "fps": 30,
+      "bounds": { "width": 3840, "height": 2160 },
+      "keyframes": [
+        { "time": 1.0, "sourceRect": { "x": 0, "y": 0, "width": 1920, "height": 1080 }, "transitionToNext": "cut" },
+        { "time": 2.0, "sourceRect": { "x": 500, "y": 300, "width": 800, "height": 600 }, "transitionToNext": null }
+      ],
+      "samples": [
+        { "time": 1.9666666666666666, "expected": { "x": 0, "y": 0, "width": 1920, "height": 1080 } },
+        { "time": 2.0, "expected": { "x": 500, "y": 300, "width": 800, "height": 600 } },
+        { "time": 2.5, "expected": { "x": 500, "y": 300, "width": 800, "height": 600 } }
+      ]
+    },
+    {
+      "name": "three keyframes smooth then cut — sample within each segment and on tail",
+      "fps": 30,
+      "bounds": { "width": 1920, "height": 1080 },
+      "keyframes": [
+        { "time": 0.0, "sourceRect": { "x": 0, "y": 0, "width": 1920, "height": 1080 }, "transitionToNext": "smooth" },
+        { "time": 1.0, "sourceRect": { "x": 200, "y": 100, "width": 960, "height": 540 }, "transitionToNext": "cut" },
+        { "time": 2.0, "sourceRect": { "x": 800, "y": 400, "width": 800, "height": 600 }, "transitionToNext": null }
+      ],
+      "samples": [
+        { "time": 0.5, "expected": { "x": 100, "y": 50, "width": 1440, "height": 810 } },
+        { "time": 1.0, "expected": { "x": 200, "y": 100, "width": 960, "height": 540 } },
+        { "time": 1.5, "expected": { "x": 200, "y": 100, "width": 960, "height": 540 } },
+        { "time": 2.0, "expected": { "x": 800, "y": 400, "width": 800, "height": 600 } }
+      ]
+    },
+    {
+      "name": "clamping — rect spills outside bounds on a single keyframe",
+      "fps": 30,
+      "bounds": { "width": 1920, "height": 1080 },
+      "keyframes": [
+        { "time": 0.0, "sourceRect": { "x": -100, "y": -200, "width": 2500, "height": 2500 }, "transitionToNext": null }
+      ],
+      "samples": [
+        { "time": 0.0, "expected": { "x": 0, "y": 0, "width": 1920, "height": 1080 } }
+      ]
+    },
+    {
+      "name": "clamping — interpolated rect drifts past right/bottom edge",
+      "fps": 30,
+      "bounds": { "width": 3840, "height": 2160 },
+      "keyframes": [
+        { "time": 0.0, "sourceRect": { "x": 3600, "y": 0, "width": 500, "height": 500 }, "transitionToNext": "smooth" },
+        { "time": 2.0, "sourceRect": { "x": 3700, "y": 0, "width": 500, "height": 500 }, "transitionToNext": null }
+      ],
+      "samples": [
+        { "time": 1.0, "expected": { "x": 3340, "y": 0, "width": 500, "height": 500 } }
+      ]
+    },
+    {
+      "name": "sub-frame time snaps to frame boundary — interpolated midpoint at 30 fps",
+      "fps": 30,
+      "bounds": { "width": 1920, "height": 1080 },
+      "keyframes": [
+        { "time": 0.0, "sourceRect": { "x": 0, "y": 0, "width": 100, "height": 100 }, "transitionToNext": "smooth" },
+        { "time": 0.06666666666666667, "sourceRect": { "x": 200, "y": 200, "width": 100, "height": 100 }, "transitionToNext": null }
+      ],
+      "samples": [
+        { "time": 0.034333333333333334, "expected": { "x": 100, "y": 100, "width": 100, "height": 100 } },
+        { "time": 0.03333333333333333, "expected": { "x": 100, "y": 100, "width": 100, "height": 100 } }
+      ]
+    },
+    {
+      "name": "non-integer fps (29.97) — snap and interpolate",
+      "fps": 29.97,
+      "bounds": { "width": 3840, "height": 2160 },
+      "keyframes": [
+        { "time": 0.0, "sourceRect": { "x": 0, "y": 0, "width": 1920, "height": 1080 }, "transitionToNext": "smooth" },
+        { "time": 10.01001001001001, "sourceRect": { "x": 200, "y": 100, "width": 960, "height": 540 }, "transitionToNext": null }
+      ],
+      "samples": [
+        { "time": 0.0, "expected": { "x": 0, "y": 0, "width": 1920, "height": 1080 } },
+        { "time": 5.0, "expected": { "x": 99.33333333333334, "y": 49.66666666666667, "width": 1443.2, "height": 811.8 } },
+        { "time": 10.01001001001001, "expected": { "x": 200, "y": 100, "width": 960, "height": 540 } }
+      ]
+    }
+  ]
+}

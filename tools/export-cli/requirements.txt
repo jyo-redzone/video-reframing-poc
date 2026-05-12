@@ -1,0 +1,12 @@
+# Runtime dependencies for the export CLI.
+#
+# Pinned to the latest stable versions as of late 2025. If these exact
+# versions fail to install on a Python 3.10 baseline, drop to the highest
+# compatible patch release and note the substitution here.
+#
+# Pillow + numpy are used for crop + scale-to-fit + black letterbox
+# compositing. opencv is intentionally avoided (heavyweight, redundant
+# with FFmpeg shipped inside av).
+av==13.1.0
+Pillow==10.4.0
+numpy==2.1.2

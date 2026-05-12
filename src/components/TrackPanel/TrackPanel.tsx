@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import useAppStore from '../../store/useAppStore';
 import VideoInfoPopover from './VideoInfoPopover';
 import TrackSelectorRow from './TrackSelectorRow';
+import ExportMp4Modal from './ExportMp4Modal';
 import {
   serializeTrack,
   buildTrackFilename,
@@ -8,6 +10,7 @@ import {
 } from '../../utils/trackFile';
 
 export default function TrackPanel() {
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const mode = useAppStore((s) => s.mode);
   const setMode = useAppStore((s) => s.setMode);
   const tracks = useAppStore((s) => s.tracks);
@@ -32,14 +35,33 @@ export default function TrackPanel() {
 
   const handleSave = () => {
     if (!activeTrack || !videoMetadata) return;
-    const json = serializeTrack(activeTrack, videoMetadata.url);
+    const json = serializeTrack(activeTrack, videoMetadata.url, {
+      width: videoMetadata.width,
+      height: videoMetadata.height,
+      fps: videoMetadata.fps,
+    });
     const filename = buildTrackFilename(videoMetadata.name, activeTrack.name);
     downloadJsonFile(filename, json);
     markActiveTrackSaved();
   };
 
+  const handleExport = () => {
+    // Same guard as Save. Export does not mutate dirty state — saving and
+    // exporting are separate intents (see Task 004 brief).
+    if (!activeTrack || !videoMetadata) return;
+    const json = serializeTrack(activeTrack, videoMetadata.url, {
+      width: videoMetadata.width,
+      height: videoMetadata.height,
+      fps: videoMetadata.fps,
+    });
+    const filename = buildTrackFilename(videoMetadata.name, activeTrack.name);
+    downloadJsonFile(filename, json);
+    setExportModalOpen(true);
+  };
+
   const videoName = videoMetadata?.name ?? 'No video loaded';
   const saveDisabled = !hasActive || !(activeTrack?.isDirty ?? false) || !videoMetadata;
+  const exportDisabled = !hasActive || !videoMetadata;
   const modeDisabled = !hasActive;
 
   return (
@@ -121,13 +143,15 @@ export default function TrackPanel() {
           <button
             type="button"
             className="flex-1 rounded-default bg-white px-3 py-2 text-sm font-medium uppercase tracking-button text-black hover:bg-white/80 disabled:opacity-40 disabled:cursor-not-allowed"
-            onClick={() => window.alert('Export not available in POC')}
-            disabled={!hasActive}
+            onClick={handleExport}
+            disabled={exportDisabled}
           >
             Export mp4
           </button>
         </div>
       </div>
+
+      <ExportMp4Modal open={exportModalOpen} onClose={() => setExportModalOpen(false)} />
     </div>
   );
 }
