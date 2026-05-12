@@ -32,7 +32,6 @@ function computeAspectResize(
   dySource: number,
   corner: Corner,
 ): SourceRect {
-  const aspect = startRect.width / startRect.height;
   const signX = corner === 'nw' || corner === 'sw' ? -1 : 1;
   const signY = corner === 'nw' || corner === 'ne' ? -1 : 1;
   const dxSigned = dxSource * signX;

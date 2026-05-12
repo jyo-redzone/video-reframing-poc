@@ -83,7 +83,7 @@ describe('HelpPanel', () => {
   });
 
   it('bbox-move row renders 4 arrow chips with no "+" between them', () => {
-    const { getByText, container } = render(<HelpPanel />);
+    const { getByText } = render(<HelpPanel />);
     // Locate the row by its description text
     const descEl = getByText('Move bbox 1px');
     const rowEl = descEl.closest('div.flex.items-center');
