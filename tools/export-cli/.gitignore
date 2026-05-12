@@ -1,0 +1,11 @@
+# Python virtualenv created by setup.sh / setup.bat
+.venv/
+
+# Python bytecode caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local outputs (Task 3 will write mp4s here when invoked without --out
+# pointing elsewhere; nothing to commit yet).
+*.mp4

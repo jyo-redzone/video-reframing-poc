@@ -36,5 +36,8 @@ export const VIEWPORT_WHEEL_ZOOM_OUT = 1.1;     // scale factor when scrolling t
 export const VIEWPORT_WHEEL_DEBOUNCE_MS = 250;  // ms after last wheel event to clear wheelActive
 
 // Track file I/O
-export const TRACK_FILE_SCHEMA_VERSION = 1;     // schemaVersion field in saved Track JSON files
+export const TRACK_FILE_SCHEMA_VERSION = 2;     // schemaVersion field in saved Track JSON files
 export const TRACK_FILENAME_PART_MAX_LENGTH = 80; // max length for sanitized filename parts
+
+// Export MP4 modal
+export const EXPORT_COPY_FEEDBACK_MS = 1500;    // duration of the "Copied!" indicator after clipboard write
